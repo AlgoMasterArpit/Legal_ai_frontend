@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -8,7 +8,7 @@ import {
   Filter,
 } from "lucide-react";
 
-export default function Dashboard() {
+export default function Dashboard({ onCreateNewCase = () => {} }) {
   const [search, setSearch] = useState("");
 
   const cases = [
@@ -88,7 +88,11 @@ export default function Dashboard() {
           <div className="flex items-center gap-6">
             <Bell className="text-gray-500" />
 
-            <button className="bg-[#081f4d] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#0f2f6d] transition">
+            <button
+              type="button"
+              onClick={onCreateNewCase}
+              className="bg-[#081f4d] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#0f2f6d] transition"
+            >
               + Create New Case
             </button>
           </div>
