@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -18,9 +18,7 @@ export default function Dashboard({ onCreateCase }) {
   const fetchCases = async (searchTerm = "") => {
     try {
       setLoading(true);
-
       const userId = localStorage.getItem("user_id");
-
       let url = `${BASE_URL}/api/v1/cases?user_id=${userId}`;
 
       if (searchTerm.trim()) {
@@ -28,13 +26,11 @@ export default function Dashboard({ onCreateCase }) {
       }
 
       const response = await fetch(url);
-
       if (!response.ok) {
         throw new Error("Failed to fetch cases");
       }
 
       const data = await response.json();
-
       setCases(data);
     } catch (err) {
       console.error("Fetch Cases Error:", err);
@@ -52,9 +48,7 @@ export default function Dashboard({ onCreateCase }) {
     localStorage.removeItem("user_id");
     localStorage.removeItem("user_name");
     localStorage.removeItem("user_email");
-
     sessionStorage.clear();
-
     window.location.reload();
   };
 
@@ -74,21 +68,21 @@ export default function Dashboard({ onCreateCase }) {
         <nav className="flex-1 px-4">
           <ul className="space-y-2">
             <li className="bg-[#eef2ff] text-[#081f4d] rounded-lg">
-              <button className="w-full flex items-center gap-3 px-4 py-3">
+              <button className="w-full flex items-center gap-3 px-4 py-3 text-left font-medium">
                 <LayoutDashboard size={18} />
                 Dashboard
               </button>
             </li>
 
             <li>
-              <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg">
+              <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg text-left">
                 <FolderOpen size={18} />
                 Cases
               </button>
             </li>
 
             <li>
-              <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg">
+              <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg text-left">
                 <Settings size={18} />
                 Settings
               </button>
@@ -99,44 +93,43 @@ export default function Dashboard({ onCreateCase }) {
         <div className="p-4 border-t">
           <button
             onClick={handleLogout}
-            className="text-gray-500 hover:text-red-600"
+            className="text-gray-500 hover:text-red-600 font-medium px-4 py-2"
           >
             Sign Out
           </button>
         </div>
       </aside>
 
-      {/* Main */}
+      {/* Main Content Viewport */}
       <main className="flex-1 p-10 overflow-auto">
-        {/* Header */}
+        {/* Header Section */}
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-4xl font-bold text-gray-900">
               Welcome Back
             </h1>
-
             <p className="text-gray-500 mt-2">
               Manage and search your legal cases.
             </p>
           </div>
 
           <div className="flex items-center gap-6">
-            <Bell className="text-gray-500" />
+            <Bell className="text-gray-500 cursor-pointer" />
 
             <button
               onClick={onCreateCase}
-              className="bg-[#081f4d] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#0f2f6d] transition"
+              className="bg-[#081f4d] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#0f2f6d] transition shadow-sm"
             >
               + Create New Case
             </button>
           </div>
         </div>
 
-        {/* Cases Card */}
-        <div className="bg-white rounded-xl border border-gray-200 mt-10">
-          {/* Top Bar */}
+        {/* Recent Cases Main Card Matrix */}
+        <div className="bg-white rounded-xl border border-gray-200 mt-10 shadow-sm">
+          {/* Dashboard Table Control Top Bar */}
           <div className="p-5 border-b flex justify-between items-center">
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-xl font-semibold text-gray-800">
               Recent Cases
             </h2>
 
@@ -146,48 +139,45 @@ export default function Dashboard({ onCreateCase }) {
                   size={16}
                   className="absolute left-3 top-3 text-gray-400"
                 />
-
                 <input
                   value={search}
                   onChange={(e) => {
                     const value = e.target.value;
-
                     setSearch(value);
-
                     fetchCases(value);
                   }}
                   placeholder="Search cases..."
-                  className="pl-10 pr-4 py-2 border rounded-lg w-72"
+                  className="pl-10 pr-4 py-2 border rounded-lg w-72 focus:outline-none focus:border-gray-400"
                 />
               </div>
 
-              <button className="border rounded-lg px-4 py-2 flex items-center gap-2">
+              <button className="border rounded-lg px-4 py-2 flex items-center gap-2 text-gray-600 hover:bg-gray-50 transition">
                 <Filter size={16} />
                 Filter
               </button>
             </div>
           </div>
 
-          {/* Table */}
-          <table className="w-full">
+          {/* Core Case Log Data Table */}
+          <table className="w-full text-left">
             <thead>
-              <tr className="bg-gray-50 text-left text-sm text-gray-500">
+              <tr className="bg-gray-50 text-sm text-gray-500 border-b">
                 <th className="px-6 py-4">CASE ID</th>
                 <th className="px-6 py-4">CASE TITLE</th>
                 <th className="px-6 py-4">CREATED DATE</th>
                 <th className="px-6 py-4">STATUS</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="text-sm text-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-10">
-                    Loading Cases...
+                  <td colSpan="4" className="text-center py-10 text-gray-400 font-medium">
+                    Loading Cases Matrix...
                   </td>
                 </tr>
               ) : cases.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-10">
+                  <td colSpan="4" className="text-center py-10 text-gray-400 font-medium">
                     No Cases Found
                   </td>
                 </tr>
@@ -195,29 +185,30 @@ export default function Dashboard({ onCreateCase }) {
                 cases.map((item) => (
                   <tr
                     key={item.id}
-                    className="border-t hover:bg-gray-50 cursor-pointer"
-                    onClick={() => console.log(item.id)}
+                    className="border-b last:border-b-0 hover:bg-gray-50/80 cursor-pointer transition"
+                    onClick={() => console.log("Selected Case Context ID:", item.id)}
                   >
-                    <td className="px-6 py-5">
-                      {item.id.slice(0, 8)}
+                    <td className="px-6 py-5 font-mono text-gray-500">
+                      {item.id.slice(0, 8).toUpperCase()}
                     </td>
 
-                    <td className="px-6 py-5 font-medium">
+                    <td className="px-6 py-5 font-semibold text-gray-900">
                       {item.title}
                     </td>
 
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-5 text-gray-500">
                       {new Date(item.created_at).toLocaleDateString()}
                     </td>
 
                     <td className="px-6 py-5">
                       <span
-                        className={`px-3 py-1 rounded-full text-sm ${item.status === "completed"
+                        className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${
+                          item.status === "completed"
                             ? "bg-green-100 text-green-700"
                             : item.status === "pending_charge_review"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-blue-100 text-blue-700"
-                          }`}
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-blue-100 text-blue-700"
+                        }`}
                       >
                         {item.status.replaceAll("_", " ")}
                       </span>
@@ -228,13 +219,13 @@ export default function Dashboard({ onCreateCase }) {
             </tbody>
           </table>
 
-          {/* Footer */}
-          <div className="flex justify-between p-5 border-t text-sm text-gray-500">
-            <button>Previous</button>
+          {/* Table Layout Control Footer */}
+          <div className="flex justify-between items-center p-5 border-t text-xs font-medium text-gray-400">
+            <button className="hover:text-gray-600 transition">Previous</button>
             <span>
-              Total Cases: {cases.length}
+              Total Cases Count: {cases.length}
             </span>
-            <button>Next</button>
+            <button className="hover:text-gray-600 transition">Next</button>
           </div>
         </div>
       </main>
