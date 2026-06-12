@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const TOKEN_KEY = 'legalai_token'; 
+const TOKEN_KEY = 'legalai_token';
 
- 
+
 const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 const isValidPhone = (v) => /^\+?[\d\s\-()]{7,15}$/.test(v.trim());
 
@@ -22,14 +22,14 @@ export default function Login({ onAuthSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
 
   // ============ Feedback states ================
-  const [error,   setError]   = useState('');
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   // On mount: if a token already exists, skip the login page 
   // This prevents a logged-in user from seeing the login form again.
   useEffect(() => {
     const existingToken = localStorage.getItem(TOKEN_KEY)
-                       || sessionStorage.getItem(TOKEN_KEY);
+      || sessionStorage.getItem(TOKEN_KEY);
     if (existingToken && onAuthSuccess) {
       onAuthSuccess(existingToken);
     }
@@ -91,12 +91,12 @@ export default function Login({ onAuthSuccess }) {
 
     try {
       const response = await fetch(endpoint, {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
+        body: JSON.stringify(payload),
       });
 
-      
+
       let data;
       try {
         data = await response.json();
@@ -122,8 +122,14 @@ export default function Login({ onAuthSuccess }) {
         setPhoneNo('');
       } else {
         const token = data.access_token;
+
+
         if (!token) throw new Error('No access token received from server.');
 
+
+        localStorage.setItem("user_id", data.user_id);
+        localStorage.setItem("user_name", data.name);
+        localStorage.setItem("user_email", data.email);
         // remember me -> localStorage(permanent)otherwise, sessionstorage(temp.)
         if (rememberMe) {
           localStorage.setItem(TOKEN_KEY, token);
@@ -285,10 +291,10 @@ export default function Login({ onAuthSuccess }) {
                   />
                   Remember me
                 </label>
-        
+
                 <button
                   type="button"
-                  onClick={() => {/* TODO: navigate to /forgot-password */}}
+                  onClick={() => {/* TODO: navigate to /forgot-password */ }}
                   className="text-slate-700 hover:underline"
                 >
                   Forgot password?
@@ -296,7 +302,7 @@ export default function Login({ onAuthSuccess }) {
               </div>
             )}
 
-  
+
             <button
               type="submit"
               disabled={isLoading}
@@ -306,7 +312,7 @@ export default function Login({ onAuthSuccess }) {
             >
               {isLoading
                 ? (isSignUpMode ? 'Creating account…' : 'Signing in…')
-                : (isSignUpMode ? 'Create account'    : 'Sign in →')
+                : (isSignUpMode ? 'Create account' : 'Sign in →')
               }
             </button>
           </form>
