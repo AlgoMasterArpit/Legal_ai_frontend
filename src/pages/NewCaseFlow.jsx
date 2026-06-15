@@ -50,7 +50,8 @@ export default function NewCaseFlow({ onBack }) {
   const [newExplanation, setNewExplanation] = useState("");
 
   const userId = localStorage.getItem("user_id");
-
+// NEW ADDITION: Computed state to check if all charges have been explicitly approved or rejected
+  const allChargesEvaluated = charges.length > 0 && charges.every((charge) => charge.is_approved !== null);
   const handleGenerateSummary = async () => {
     if (!description.trim()) return;
     try {
@@ -407,14 +408,19 @@ export default function NewCaseFlow({ onBack }) {
                       </tbody>
                     </table>
                   </div>
+                  
 
-                  {step === 3 && (
+                {step === 3 && (
                     <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-xs">
-                      <span className="text-gray-400 italic">Review mapped code matrices prior to fetching citation payloads.</span>
+                      <span className={`italic ${!allChargesEvaluated ? "text-amber-600" : "text-emerald-600"}`}>
+                        {!allChargesEvaluated 
+                          ? "⚠️ Please approve or reject all sections before continuing." 
+                          : "✅ All sections evaluated. Ready to fetch citations."}
+                      </span>
                       <button
                         onClick={handleFinalizeCharges}
-                        disabled={loading}
-                        className="bg-[#081f4d] hover:bg-[#122e66] text-white font-semibold px-6 py-2.5 rounded-xl transition shadow-sm flex items-center gap-2"
+                        disabled={loading || !allChargesEvaluated}
+                        className="bg-[#081f4d] hover:bg-[#122e66] disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-xl transition shadow-sm flex items-center gap-2"
                       >
                         {loading ? "Cross-referencing..." : "Confirm & Continue"}
                         {!loading && <ArrowRight size={14} />}
