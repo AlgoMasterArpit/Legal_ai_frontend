@@ -14,7 +14,7 @@ import {
   Scale
 } from "lucide-react";
 
-export default function Dashboard({ onCreateCase }) {
+export default function Dashboard({ onCreateCase, onResumeCase }) {
   const [search, setSearch] = useState("");
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,12 +26,16 @@ export default function Dashboard({ onCreateCase }) {
     try {
       setLoading(true);
       const userId = localStorage.getItem("user_id");
-      let url = `${BASE_URL}/api/v1/cases?user_id=${userId}`;
+      
+      // SAFE REFACTOR: Removes any trailing slashes from BASE_URL to completely eliminate accidental 500 error router loops
+      const cleanBaseUrl = BASE_URL.replace(/\/+$/, "");
+      let url = `${cleanBaseUrl}/api/v1/cases?user_id=${userId}`;
 
       if (searchTerm.trim()) {
         url += `&search=${encodeURIComponent(searchTerm)}`;
       }
 
+      console.log("🌐 [Dashboard Fetch] Pulling clean endpoint matrix from:", url);
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch cases");
@@ -40,7 +44,7 @@ export default function Dashboard({ onCreateCase }) {
       const data = await response.json();
       setCases(data);
     } catch (err) {
-      console.error("Fetch Cases Error:", err);
+      console.error("Dashboard.jsx:44 Fetch Cases Error:", err);
     } finally {
       setLoading(false);
     }
@@ -60,13 +64,10 @@ export default function Dashboard({ onCreateCase }) {
   };
 
   return (
-    // Light Grey/Slate Page Background for depth contrast
     <div className="flex h-screen bg-[#F8FAFC] font-sans text-[#0F172A] overflow-hidden">
       
-      {/* Dark Navy Enterprise Sidebar */}
+      {/* Sidebar Navigation */}
       <aside className="w-64 bg-[#0F172A] flex flex-col shrink-0 z-10 shadow-[4px_0_24px_rgba(15,23,42,0.15)]">
-        
-        {/* Logo Branding Highlight Block */}
         <div className="p-6 bg-gradient-to-br from-[#0F172A] to-[#1E3A8A] border-b border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-blue-600/20 border border-blue-500/30 rounded-xl flex items-center justify-center text-blue-400">
@@ -83,7 +84,6 @@ export default function Dashboard({ onCreateCase }) {
           </div>
         </div>
 
-        {/* Navigation Layer */}
         <nav className="flex-1 px-4 py-6">
           <ul className="space-y-1">
             <li className="bg-[#2563EB] text-white rounded-xl shadow-md shadow-blue-900/20">
@@ -92,24 +92,20 @@ export default function Dashboard({ onCreateCase }) {
                 Dashboard
               </button>
             </li>
-
             <li>
               <button className="w-full flex items-center gap-3 px-4 py-3.5 text-[#CBD5E1] hover:text-white hover:bg-slate-800/50 rounded-xl text-left font-semibold text-sm transition-all duration-150 group">
                 <FolderOpen size={18} className="text-slate-400 group-hover:text-white" />
                 Cases
               </button>
             </li>
-
             <li>
               <button className="w-full flex items-center gap-3 px-4 py-3.5 text-[#CBD5E1] hover:text-white hover:bg-slate-800/50 rounded-xl text-left font-semibold text-sm transition-all duration-150 group">
-                <Settings size={18} className="text-slate-400 group-hover:text-white" />
-                Settings
+                <Settings size={18} className="text-slate-400" /> Settings
               </button>
             </li>
           </ul>
         </nav>
 
-        {/* Footer Area - FIXED text to just "Sign Out" */}
         <div className="p-4 border-t border-slate-800/60 bg-slate-950/20">
           <button
             onClick={handleLogout}
@@ -120,13 +116,10 @@ export default function Dashboard({ onCreateCase }) {
         </div>
       </aside>
 
-      {/* Main Container Layer */}
+      {/* Main Viewport Grid */}
       <div className="flex-1 flex overflow-hidden">
-        
-        {/* Dashboard Frame Viewport */}
         <main className="flex-1 p-8 lg:p-12 overflow-auto transition-all duration-300">
           
-          {/* Header Node */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/60 pb-6">
             <div>
               <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-slate-900">
@@ -152,10 +145,8 @@ export default function Dashboard({ onCreateCase }) {
             </div>
           </div>
 
-          {/* Premium White Elevated Card Table Container */}
+          {/* Elevated Card Table Container */}
           <div className="bg-white border border-[#E2E8F0] rounded-2xl mt-8 shadow-[0_4px_20px_rgba(15,23,42,0.05)] overflow-hidden p-1">
-            
-            {/* Table Controller Elements */}
             <div className="p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white rounded-t-xl">
               <div>
                 <h2 className="text-base font-extrabold text-[#0F172A] flex items-center gap-2 tracking-tight">
@@ -167,7 +158,7 @@ export default function Dashboard({ onCreateCase }) {
 
               <div className="flex gap-2.5 w-full md:w-auto">
                 <div className="relative flex-1 md:flex-none">
-                  <Search size={15} className="absolute left-3.5 top-3.5 text-slate-400" />
+                  <Search size={15} className="absolute left-3.5 top-3 text-slate-400" />
                   <input
                     value={search}
                     onChange={(e) => {
@@ -179,7 +170,6 @@ export default function Dashboard({ onCreateCase }) {
                     className="pl-10 pr-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl w-full md:w-64 text-sm font-medium focus:outline-none focus:bg-white focus:border-[#3B82F6] transition-all duration-150 placeholder-slate-400 text-[#0F172A]"
                   />
                 </div>
-
                 <button className="border border-[#E2E8F0] rounded-xl px-4 py-2.5 flex items-center gap-2 text-xs font-bold text-[#64748B] bg-white hover:bg-slate-50 transition shadow-xs">
                   <Filter size={14} />
                   Filters
@@ -187,7 +177,6 @@ export default function Dashboard({ onCreateCase }) {
               </div>
             </div>
 
-            {/* Core Data Sheets Grid */}
             <div className="overflow-x-auto bg-white rounded-b-xl">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -224,20 +213,24 @@ export default function Dashboard({ onCreateCase }) {
                             ? "bg-blue-50/50" 
                             : "bg-white hover:bg-[#F8FAFC]"
                         }`}
-                        onClick={() => setSelectedCase(item)}
+                        onClick={() => {
+                          if (item.status !== "completed" && onResumeCase) {
+                            onResumeCase(item.id, item.status);
+                          } else {
+                            setSelectedCase(item);
+                          }
+                        }}
                       >
                         <td className="px-6 py-4.5 whitespace-nowrap">
                           <span className="font-mono text-xs font-bold text-[#64748B] bg-slate-100 group-hover:bg-white px-2 py-1 rounded-md tracking-wider border border-slate-200 shadow-2xs transition-colors">
                             {item.id.slice(0, 8).toUpperCase()}
                           </span>
                         </td>
-
                         <td className="px-6 py-4.5">
                           <span className="font-bold text-[#0F172A] group-hover:text-[#1E40AF] transition-colors duration-150 text-sm block max-w-sm truncate">
                             {item.title}
                           </span>
                         </td>
-
                         <td className="px-6 py-4.5 whitespace-nowrap text-[#64748B] font-medium text-xs">
                           <div className="flex items-center gap-1.5 text-[#64748B]">
                             <Calendar size={13} className="text-slate-400" />
@@ -248,14 +241,12 @@ export default function Dashboard({ onCreateCase }) {
                             })}
                           </div>
                         </td>
-
-                        {/* Status Badges Layer mapping */}
                         <td className="px-6 py-4.5 whitespace-nowrap">
                           <span
                             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wide border capitalize ${
                               item.status === "completed"
                                 ? "bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]"
-                                : item.status === "pending_charge_review"
+                                : item.status === "pending_charge_review" || item.status === "pending_section_mapping"
                                 ? "bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]"
                                 : "bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE]"
                             }`}
@@ -263,17 +254,21 @@ export default function Dashboard({ onCreateCase }) {
                             <span className={`w-1.5 h-1.5 rounded-full ${
                               item.status === "completed" 
                                 ? "bg-[#137333]" 
-                                : item.status === "pending_charge_review" 
+                                : item.status === "pending_charge_review" || item.status === "pending_section_mapping"
                                 ? "bg-[#D97706]" 
                                 : "bg-[#1D4ED8]"
                             }`} />
                             {item.status.replaceAll("_", " ")}
                           </span>
                         </td>
-
                         <td className="px-6 py-4.5 whitespace-nowrap text-right">
-                          <button className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 group-hover:text-[#1E40AF] bg-white border border-slate-200 px-3 py-1.5 rounded-xl transition-all duration-150 shadow-2xs">
-                            Inspect <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-150" />
+                          <button className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-all duration-150 shadow-2xs ${
+                            item.status === "completed"
+                              ? "text-slate-400 group-hover:text-[#1E40AF] bg-white border border-slate-200"
+                              : "text-white bg-[#2563EB] border border-transparent hover:bg-blue-700"
+                          }`}>
+                            {item.status === "completed" ? "Inspect" : "Resume"} 
+                            <ArrowRight size={12} className={item.status === "completed" ? "opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-150" : "translate-x-0.5"} />
                           </button>
                         </td>
                       </tr>
@@ -283,7 +278,6 @@ export default function Dashboard({ onCreateCase }) {
               </table>
             </div>
 
-            {/* Layout Footer Pagination */}
             <div className="flex justify-between items-center p-5 rounded-b-xl border-t border-[#E2E8F0] bg-[#F8FAFC] text-xs font-bold text-[#64748B] tracking-wide">
               <button className="hover:text-[#1E40AF] transition-colors duration-150">Previous</button>
               <span className="bg-white border border-[#E2E8F0] px-3 py-1.5 rounded-lg text-[#64748B] shadow-2xs">
@@ -293,63 +287,6 @@ export default function Dashboard({ onCreateCase }) {
             </div>
           </div>
         </main>
-
-        {/* Sliding Context Summary Sheet Drawer */}
-        {selectedCase && (
-          <aside className="w-[450px] bg-white border-l border-[#E2E8F0] shadow-[-8px_0_24px_rgba(15,23,42,0.04)] flex flex-col h-full animate-in slide-in-from-right duration-200 shrink-0">
-            <div className="p-6 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
-              <div className="flex items-center gap-2">
-                <Scale size={18} className="text-[#1E40AF]" />
-                <h3 className="font-extrabold text-[#0F172A] text-sm tracking-tight">Audit Intelligence Inspector</h3>
-              </div>
-              <button 
-                onClick={() => setSelectedCase(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="flex-1 p-6 overflow-auto space-y-6">
-              <div>
-                <span className="font-mono text-xs font-bold text-[#1D4ED8] bg-[#DBEAFE] border border-[#BFDBFE] px-2 py-1 rounded">
-                  {selectedCase.id.toUpperCase()}
-                </span>
-                <h2 className="text-xl font-black text-slate-900 mt-3 leading-snug tracking-tight">
-                  {selectedCase.title}
-                </h2>
-              </div>
-
-              <div className="bg-[#F8FAFC] rounded-xl p-4 border border-[#E2E8F0] space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Analysis State</span>
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold tracking-wide border capitalize ${
-                    selectedCase.status === "completed" ? "bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]" : "bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE]"
-                  }`}>
-                    {selectedCase.status.replaceAll("_", " ")}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Discovered On</span>
-                  <span className="text-xs font-semibold text-slate-700">{new Date(selectedCase.created_at).toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
-                  <FileText size={14} className="text-slate-400" /> Statutory Analytics Output
-                </h4>
-                <div className="text-sm leading-relaxed text-slate-600 bg-white p-4 rounded-xl border border-[#E2E8F0] shadow-2xs">
-                  <p>AI compilation report logs are active for this matrix node. Comprehensive statutory sections match verification pipeline executes natively on backend models.</p>
-                  <div className="mt-4 p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-mono text-slate-400">
-                    user_context_id: {selectedCase.user_id || "default_node"}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </aside>
-        )}
-
       </div>
     </div>
   );

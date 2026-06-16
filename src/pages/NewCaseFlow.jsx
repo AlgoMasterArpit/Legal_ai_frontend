@@ -39,9 +39,10 @@ const FLOW_STEPS = [
   { id: 4, label: "Final Precedents", icon: Activity }
 ];
 
-export default function NewCaseFlow({ onBack }) {
+export default function NewCaseFlow({ onBack, resumeData }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [hydrationLoading, setHydrationLoading] = useState(false); 
   
   const [description, setDescription] = useState("");
   const [summary, setSummary] = useState("");
@@ -52,7 +53,7 @@ export default function NewCaseFlow({ onBack }) {
   // Layout UI State handlers
   const [isEditingSummary, setIsEditingSummary] = useState(false);
   const [isRawDocOpen, setIsRawDocOpen] = useState(false);
-  const [activeHoverModal, setActiveHoverModal] = useState(null); // 'approved' | 'rejected' | null
+  const [activeHoverModal, setActiveHoverModal] = useState(null); 
 
   // Dynamic User Initials State
   const [userInitials, setUserInitials] = useState("AI");
@@ -65,6 +66,7 @@ export default function NewCaseFlow({ onBack }) {
   const [newExplanation, setNewExplanation] = useState("");
 
   const userId = localStorage.getItem("user_id");
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const fullName = localStorage.getItem("user_name") || "";
@@ -81,6 +83,79 @@ export default function NewCaseFlow({ onBack }) {
     }
   }, []);
 
+  useEffect(() => {
+    const hydrateIncompleteCase = async () => {
+      if (!resumeData || !resumeData.id) return;
+
+      try {
+        setHydrationLoading(true);
+        setCaseId(resumeData.id);
+
+        const cleanBaseUrl = BASE_URL.replace(/\/+$/, "");
+        let activeNode = null;
+
+        try {
+          const directCaseUrl = `${cleanBaseUrl}/api/v1/cases/${resumeData.id}`;
+          const directResp = await fetch(directCaseUrl);
+          if (directResp.ok) {
+            activeNode = await directResp.json();
+          }
+        } catch (e) {
+          console.warn("Direct path bypass.");
+        }
+
+        if (!activeNode) {
+          const listUrl = `${cleanBaseUrl}/api/v1/cases?user_id=${userId}`;
+          const listResp = await fetch(listUrl);
+          if (listResp.ok) {
+            const allCases = await listResp.json();
+            activeNode = Array.isArray(allCases) ? allCases.find(c => c.id === resumeData.id) : null;
+          }
+        }
+
+        if (activeNode) {
+          setDescription(activeNode.raw_description || activeNode.description || "");
+          setSummary(activeNode.llm_summary || activeNode.lawyer_approved_summary || "");
+          
+          if (resumeData.currentStatus === "pending_summary_approval") {
+            setStep(2);
+          } else if (resumeData.currentStatus === "pending_charge_review" || resumeData.currentStatus === "pending_section_mapping") {
+            
+            const rawChargesArray = activeNode.charges || activeNode.draft_charges || [];
+            const localSavedKey = `legalai_cache_case_${resumeData.id}`;
+            const localDecisionCache = JSON.parse(localStorage.getItem(localSavedKey) || "{}");
+
+            const formattedCharges = Array.isArray(rawChargesArray) 
+              ? rawChargesArray.map((c) => {
+                  const currentSectionCode = c?.ipc_section || c?.section_code || c?.ipc_section_code || "";
+                  const cachedDecision = localDecisionCache[currentSectionCode];
+
+                  return {
+                    id: c?.id || null,
+                    ipc_section: currentSectionCode || "N/A",
+                    bns_equivalent: c?.bns_equivalent || "N/A",
+                    legal_category: c?.legal_category || "Statutory Check",
+                    explanation: c?.explanation || c?.description || c?.case_offense_description || "",
+                    confidence: c?.confidence || 85,
+                    is_approved: cachedDecision !== undefined ? cachedDecision : (c?.is_approved !== undefined ? c.is_approved : null)
+                  };
+                })
+              : [];
+                
+            setCharges(formattedCharges);
+            setStep(3);
+          }
+        }
+      } catch (err) {
+        console.error("💥 [Hydration Master Crash Tracker]:", err);
+      } finally {
+        setHydrationLoading(false);
+      }
+    };
+
+    hydrateIncompleteCase();
+  }, [resumeData]);
+
   const handleLogout = () => {
     localStorage.removeItem("legalai_token");
     localStorage.removeItem("user_id");
@@ -90,8 +165,31 @@ export default function NewCaseFlow({ onBack }) {
     window.location.reload();
   };
 
-  // Computed state to check if all charges have been explicitly approved or rejected
-  const allChargesEvaluated = charges.length > 0 && charges.every((charge) => charge.is_approved !== null);
+  const toggleChargeStatus = (targetSectionCode, approvalState) => {
+    if (!caseId || !targetSectionCode) return;
+
+    setCharges(prevCharges => {
+      const updatedCharges = prevCharges.map((charge) => 
+        charge.ipc_section === targetSectionCode ? { ...charge, is_approved: approvalState } : charge
+      );
+
+      const localSavedKey = `legalai_cache_case_${caseId}`;
+      const decisionMap = {};
+      updatedCharges.forEach(c => {
+        if (c.ipc_section && c.is_approved !== null) {
+          decisionMap[c.ipc_section] = c.is_approved;
+        }
+      });
+
+      localStorage.setItem(localSavedKey, JSON.stringify(decisionMap));
+      return updatedCharges;
+    });
+  };
+
+  const approvedChargesCount = Array.isArray(charges) ? charges.filter(c => c?.is_approved === true).length : 0;
+  const rejectedChargesCount = Array.isArray(charges) ? charges.filter(c => c?.is_approved === false).length : 0;
+  const pendingChargesCount = Array.isArray(charges) ? charges.filter(c => c?.is_approved === null).length : 0;
+  const allChargesEvaluated = Array.isArray(charges) && charges.length > 0 && charges.every((charge) => charge?.is_approved !== null);
 
   const handleGenerateSummary = async () => {
     if (description.trim().length < 100) return;
@@ -113,11 +211,11 @@ export default function NewCaseFlow({ onBack }) {
     try {
       setLoading(true); 
       const data = await extractCharges(caseId, summary);
-      if (!data.draft_charges) return;
+      if (!data?.draft_charges) return;
       const formattedCharges = data.draft_charges.map((c) => ({
         ...c,
         is_approved: null,
-        confidence: c.confidence || 85
+        confidence: c?.confidence || 85
       }));
       setCharges(formattedCharges);
       setStep(3);
@@ -133,29 +231,22 @@ export default function NewCaseFlow({ onBack }) {
 
     try {
       setLoading(true);
-      const approvedIds = charges.filter((c) => c.is_approved && c.id).map((c) => c.id);
+      const approvedIds = charges.filter((c) => c?.is_approved && c?.id).map((c) => c.id);
       const rejectedData = charges
-        .filter((c) => c.is_approved === false && c.id)
+        .filter((c) => c?.is_approved === false && c?.id)
         .map((c) => ({ id: c.id, reason: "Rejected by lawyer" }));
 
       await finalizeCharges(caseId, approvedIds, rejectedData);
+      localStorage.removeItem(`legalai_cache_case_${caseId}`);
+
       const precedentData = await fetchPrecedents(caseId);
-      
-      setPrecedents(precedentData.precedent_cases || []);
+      setPrecedents(precedentData?.precedent_cases || []);
       setStep(4);
     } catch (err) {
       console.error("Finalization Workflow Network Error:", err);
     } finally {
       setLoading(false);
     }
-  };
-
-  const toggleChargeStatus = (targetIndex, approvalState) => {
-    setCharges(prevCharges => 
-      prevCharges.map((charge, idx) => 
-        idx === targetIndex ? { ...charge, is_approved: approvalState } : charge
-      )
-    );
   };
 
   const handleAddManualSection = (e) => {
@@ -171,14 +262,25 @@ export default function NewCaseFlow({ onBack }) {
       is_approved: true
     };
 
-    setCharges((prev) => [...prev, customRow]);
+    setCharges((prev) => {
+      const appended = [...prev, customRow];
+      const localSavedKey = `legalai_cache_case_${caseId}`;
+      const decisionMap = JSON.parse(localStorage.getItem(localSavedKey) || "{}");
+      decisionMap[customRow.ipc_section] = true;
+      localStorage.setItem(localSavedKey, JSON.stringify(decisionMap));
+      return appended;
+    });
     setIsModalOpen(false);
   };
 
-  // Derived Filter States
-  const approvedChargesCount = charges.filter(c => c.is_approved === true).length;
-  const rejectedChargesCount = charges.filter(c => c.is_approved === false).length;
-  const activePendingCharges = charges.filter(c => c.is_approved === null);
+  if (hydrationLoading) {
+    return (
+      <div className="flex h-screen w-screen bg-[#F8FAFC] items-center justify-center font-sans gap-2.5 text-[#0F172A]">
+        <div className="w-5 h-5 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm font-bold tracking-tight">Reconstituting Mapped Code States and Summaries...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] font-sans text-[#0F172A] relative overflow-hidden">
@@ -223,7 +325,6 @@ export default function NewCaseFlow({ onBack }) {
 
       {/* Main Framework Body Viewport */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        
         <header className="bg-white border-b border-[#E2E8F0] px-8 py-5 flex justify-between items-center shrink-0">
           <div>
             <h1 className="text-lg font-extrabold text-[#0F172A] tracking-tight">
@@ -268,8 +369,6 @@ export default function NewCaseFlow({ onBack }) {
 
         {/* Main Processing Scroll View Container */}
         <div className="flex-1 overflow-auto p-8 lg:p-12 space-y-8">
-          
-          {/* Timeline wizard mapping panel node */}
           {step > 1 && (
             <div className="max-w-5xl mx-auto bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-2xs">
               <div className="flex items-center justify-between relative">
@@ -302,7 +401,6 @@ export default function NewCaseFlow({ onBack }) {
           )}
 
           <div className="max-w-5xl mx-auto">
-            
             {/* STEP 1: Textarea Core Box View */}
             {step === 1 && (
               <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.04)] p-8">
@@ -452,17 +550,16 @@ export default function NewCaseFlow({ onBack }) {
                           <div className="absolute right-0 top-8 w-72 bg-white border border-[#E2E8F0] rounded-xl p-3 shadow-xl text-left text-slate-700 pointer-events-auto z-50">
                             <h4 className="font-extrabold text-[11px] text-[#137333] uppercase tracking-wider mb-2 border-b pb-1 flex items-center justify-between">
                               <span>Approved Elements Queue</span>
-                              <span className="text-[9px] font-normal text-slate-400 lowercase">click item to edit state</span>
                             </h4>
                             <ul className="space-y-1 max-h-40 overflow-y-auto">
-                              {charges.map((c, i) => c.is_approved === true ? (
+                              {Array.isArray(charges) && charges.map((c, i) => c?.is_approved === true ? (
                                 <li key={i} className="bg-slate-50 p-1.5 rounded border border-slate-100 flex items-center justify-between gap-2 text-[10px] font-medium font-mono">
-                                  <span className="truncate text-slate-800">{c.ipc_section}</span>
+                                  <span className="truncate text-slate-800">{c?.ipc_section}</span>
                                   <button 
-                                    onClick={(e) => { e.stopPropagation(); toggleChargeStatus(i, false); }}
+                                    onClick={(e) => { e.stopPropagation(); toggleChargeStatus(c.ipc_section, null); }}
                                     className="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded border border-rose-200/60 flex items-center gap-0.5 transition font-sans text-[9px]"
                                   >
-                                    <ArrowLeftRight size={10} /> Reject
+                                    <ArrowLeftRight size={10} /> Reset
                                   </button>
                                 </li>
                               ) : null)}
@@ -482,17 +579,16 @@ export default function NewCaseFlow({ onBack }) {
                           <div className="absolute right-0 top-8 w-72 bg-white border border-[#E2E8F0] rounded-xl p-3 shadow-xl text-left text-slate-700 pointer-events-auto z-50">
                             <h4 className="font-extrabold text-[11px] text-rose-700 uppercase tracking-wider mb-2 border-b pb-1 flex items-center justify-between">
                               <span>Rejected Elements Queue</span>
-                              <span className="text-[9px] font-normal text-slate-400 lowercase">click item to edit state</span>
                             </h4>
                             <ul className="space-y-1 max-h-40 overflow-y-auto">
-                              {charges.map((c, i) => c.is_approved === false ? (
+                              {Array.isArray(charges) && charges.map((c, i) => c?.is_approved === false ? (
                                 <li key={i} className="bg-slate-50 p-1.5 rounded border border-slate-100 flex items-center justify-between gap-2 text-[10px] font-medium font-mono">
-                                  <span className="truncate text-slate-800">{c.ipc_section}</span>
+                                  <span className="truncate text-slate-800">{c?.ipc_section}</span>
                                   <button 
-                                    onClick={(e) => { e.stopPropagation(); toggleChargeStatus(i, true); }}
+                                    onClick={(e) => { e.stopPropagation(); toggleChargeStatus(c.ipc_section, null); }}
                                     className="px-1.5 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded border border-emerald-200/60 flex items-center gap-0.5 transition font-sans text-[9px]"
                                   >
-                                    <ArrowLeftRight size={10} /> Approve
+                                    <ArrowLeftRight size={10} /> Reset
                                   </button>
                                 </li>
                               ) : null)}
@@ -524,53 +620,62 @@ export default function NewCaseFlow({ onBack }) {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 text-xs bg-white">
-                        {activePendingCharges.length === 0 ? (
+                        {charges.length === 0 ? (
                           <tr>
-                            <td colSpan="5" className="text-center py-12 text-[#137333] font-bold bg-slate-50/40 italic">
-                              🎉 All statutory rows reviewed successfully! Verify or edit via counter elements above to unlock confirmation.
+                            <td colSpan="5" className="text-center py-12 text-[#64748B] font-bold bg-slate-50/40 italic">
+                              ⏳ Extracting and formulating statutory matrix data columns...
                             </td>
                           </tr>
                         ) : (
-                          activePendingCharges.map((charge, realIdx) => {
-                            const absoluteIndex = charges.findIndex(c => c.ipc_section === charge.ipc_section && c.explanation === charge.explanation);
+                          charges.map((charge, realIdx) => {
                             return (
                               <tr key={realIdx} className="hover:bg-[#F8FAFC] transition-all duration-200">
                                 <td className="px-6 py-4.5 font-mono font-bold text-gray-900">
-                                  <span className="text-xs px-2 py-0.5 rounded bg-slate-100 border border-slate-200">{charge.ipc_section}</span>
-                                  <div className="text-[10px] text-slate-400 font-semibold mt-1.5 pl-0.5">BNS: {charge.bns_equivalent || "N/A"}</div>
+                                  <span className="text-xs px-2 py-0.5 rounded bg-slate-100 border border-slate-200">{charge?.ipc_section}</span>
+                                  <div className="text-[10px] text-slate-400 font-semibold mt-1.5 pl-0.5">BNS: {charge?.bns_equivalent || "N/A"}</div>
                                 </td>
                                 <td className="px-6 py-4.5">
                                   <span className="bg-[#DBEAFE] text-[#1D4ED8] px-2.5 py-1 rounded-xl font-bold border border-[#BFDBFE] tracking-wide">
-                                    {charge.legal_category || "Statutory Check"}
+                                    {charge?.legal_category || "Statutory Check"}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4.5 text-slate-600 max-w-sm leading-relaxed font-medium">
-                                  {charge.explanation}
+                                  {charge?.explanation}
                                 </td>
                                 <td className="px-6 py-4.5 font-bold whitespace-nowrap">
                                   <div className="flex items-center gap-2">
                                     <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full" style={{ width: `${charge.confidence || 85}%` }}></div>
+                                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full" style={{ width: `${charge?.confidence || 85}%` }}></div>
                                     </div>
-                                    <span className="font-mono text-slate-500 text-[11px]">{charge.confidence || 85}%</span>
+                                    <span className="font-mono text-slate-500 text-[11px]">{charge?.confidence || 85}%</span>
                                   </div>
                                 </td>
                                 
                                 <td className="px-6 py-4.5 text-right whitespace-nowrap">
-                                  <div className="inline-flex gap-1.5">
-                                    <button
-                                      onClick={() => toggleChargeStatus(absoluteIndex, true)}
-                                      className="bg-white text-[#64748B] hover:text-[#137333] hover:bg-[#E6F4EA] hover:border-[#CEEAD6] text-xs font-bold px-2.5 py-1.5 rounded-xl border border-slate-200 transition active:scale-95 flex items-center gap-1 shadow-3xs"
-                                    >
-                                      <Check size={12} /> Approve
-                                    </button>
-                                    <button
-                                      onClick={() => toggleChargeStatus(absoluteIndex, false)}
-                                      className="bg-white text-[#64748B] hover:text-rose-700 hover:bg-rose-50 hover:border-rose-200 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-slate-200 transition active:scale-95 flex items-center gap-1 shadow-3xs"
-                                    >
-                                      <X size={12} /> Reject
-                                    </button>
-                                  </div>
+                                  {charge.is_approved === true ? (
+                                    <span className="text-xs px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold inline-flex items-center gap-1 cursor-pointer" onClick={() => toggleChargeStatus(charge.ipc_section, null)}>
+                                      <CheckCircle size={12} /> Approved
+                                    </span>
+                                  ) : charge.is_approved === false ? (
+                                    <span className="text-xs px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold inline-flex items-center gap-1 cursor-pointer" onClick={() => toggleChargeStatus(charge.ipc_section, null)}>
+                                      <XCircle size={12} /> Rejected
+                                    </span>
+                                  ) : (
+                                    <div className="inline-flex gap-1.5">
+                                      <button
+                                        onClick={() => toggleChargeStatus(charge.ipc_section, true)}
+                                        className="bg-white text-[#64748B] hover:text-[#137333] hover:bg-[#E6F4EA] hover:border-[#CEEAD6] text-xs font-bold px-2.5 py-1.5 rounded-xl border border-slate-200 transition active:scale-95 flex items-center gap-1 shadow-3xs"
+                                      >
+                                        <Check size={12} /> Approve
+                                      </button>
+                                      <button
+                                        onClick={() => toggleChargeStatus(charge.ipc_section, false)}
+                                        className="bg-white text-[#64748B] hover:text-rose-700 hover:bg-rose-50 hover:border-rose-200 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-slate-200 transition active:scale-95 flex items-center gap-1 shadow-3xs"
+                                      >
+                                        <X size={12} /> Reject
+                                      </button>
+                                    </div>
+                                  )}
                                 </td>
                               </tr>
                             );
@@ -583,13 +688,13 @@ export default function NewCaseFlow({ onBack }) {
                   {/* Footer Controller Bar */}
                   {step === 3 && (
                     <div className="p-5 bg-[#F8FAFC] border-t border-[#E2E8F0] flex justify-between items-center text-xs font-bold">
-                      {!allChargesEvaluated ? (
+                      {pendingChargesCount > 0 ? (
                         <span className="text-amber-600 flex items-center gap-1 bg-amber-50 border border-amber-200/50 px-3 py-1.5 rounded-xl animate-pulse">
-                          <AlertCircle size={13} /> Gating Error: Review remaining {activePendingCharges.length} identified code nodes to unlock confirmation.
+                          <AlertCircle size={13} /> Gating Error: Review remaining {pendingChargesCount} identified statutory nodes to unlock confirmation.
                         </span>
                       ) : (
                         <span className="text-[#137333] flex items-center gap-1 bg-[#E6F4EA] border border-[#CEEAD6] px-3 py-1.5 rounded-xl">
-                          <CheckCircle size={13} /> Complete structure audit cleared. Lock encryption keys.
+                          <CheckCircle size={13} /> Complete structure audit cleared. Ready to finalize.
                         </span>
                       )}
 
@@ -620,20 +725,20 @@ export default function NewCaseFlow({ onBack }) {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {precedents.map((item) => (
-                          <div key={item.id} className="bg-[#F1F5F9]/70 border border-[#E2E8F0] hover:border-slate-300 rounded-xl p-5 shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
+                          <div key={item?.id || Math.random()} className="bg-[#F1F5F9]/70 border border-[#E2E8F0] hover:border-slate-300 rounded-xl p-5 shadow-2xs hover:shadow-xs transition flex flex-col justify-between">
                             <div className="space-y-2">
                               <div className="flex justify-between items-center text-[10px] font-bold font-mono tracking-wider">
-                                <span className="text-slate-400">CASE ID: {item.id ? item.id.slice(0, 10).toUpperCase() : "2024/DL-8042"}</span>
+                                <span className="text-slate-400">CASE ID: {item?.id ? item.id.slice(0, 10).toUpperCase() : "2024/DL-8042"}</span>
                                 <span className="text-[#137333] bg-[#E6F4EA] px-2 py-0.5 rounded-xl border border-[#CEEAD6]">98.2% Match</span>
                               </div>
-                              <h4 className="font-bold text-[#0F172A] leading-snug text-sm line-clamp-2">{item.title}</h4>
+                              <h4 className="font-bold text-[#0F172A] leading-snug text-sm line-clamp-2">{item?.title}</h4>
                               <div className="flex gap-4 text-[11px] text-slate-400 font-semibold">
                                 <span>⚖️ Judgment: Guilty</span>
                                 <span>📅 Date: Oct 12, 2023</span>
                               </div>
                             </div>
                             <div className="mt-5 pt-3 border-t border-slate-200 flex justify-end">
-                              <a href={item.doc_url} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#1E40AF] hover:text-blue-700 flex items-center gap-1 transition">
+                              <a href={item?.doc_url} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#1E40AF] hover:text-blue-700 flex items-center gap-1 transition">
                                 View Details <ArrowRight size={12} />
                               </a>
                             </div>
@@ -649,7 +754,7 @@ export default function NewCaseFlow({ onBack }) {
         </div>
       </main>
 
-      {/* Manual Entry Modal Overlay */}
+      {/* Manual Entry Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-gray-100">

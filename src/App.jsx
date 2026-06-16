@@ -6,10 +6,25 @@ import NewCaseFlow from "./pages/NewCaseFlow";
 export default function App() {
   const [currentView, setCurrentView] = useState("dashboard");
   const [authenticated, setAuthenticated] = useState(!!localStorage.getItem("legalai_token"));
+  
+  // NEW STATE: Tracks if we are resuming an incomplete case or starting completely fresh
+  const [activeCaseData, setActiveCaseData] = useState(null);
 
   const handleAuthSuccess = (token) => {
     setAuthenticated(true);
     setCurrentView("dashboard");
+  };
+
+  // Triggers when user clicks on any pending/incomplete case log row inside dashboard
+  const handleResumeCasePipeline = (caseId, status) => {
+    setActiveCaseData({ id: caseId, currentStatus: status });
+    setCurrentView("new-case");
+  };
+
+  // Triggers when user clicks the fresh "+ Create New Case" button
+  const handleStartFreshCase = () => {
+    setActiveCaseData(null); // Explicitly clean past reference traces
+    setCurrentView("new-case");
   };
 
   if (!authenticated) {
@@ -20,13 +35,18 @@ export default function App() {
     <>
       {currentView === "dashboard" && (
         <Dashboard 
-          onCreateCase={() => setCurrentView("new-case")} 
+          onCreateCase={handleStartFreshCase} 
+          onResumeCase={handleResumeCasePipeline}
         />
       )}
 
       {currentView === "new-case" && (
         <NewCaseFlow 
-          onBack={() => setCurrentView("dashboard")} 
+          resumeData={activeCaseData}
+          onBack={() => {
+            setActiveCaseData(null);
+            setCurrentView("dashboard");
+          }} 
         />
       )}
     </>
