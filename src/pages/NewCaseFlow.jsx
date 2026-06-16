@@ -90,6 +90,9 @@ export default function NewCaseFlow({ onBack }) {
     window.location.reload();
   };
 
+  // Computed state to check if all charges have been explicitly approved or rejected
+  const allChargesEvaluated = charges.length > 0 && charges.every((charge) => charge.is_approved !== null);
+
   const handleGenerateSummary = async () => {
     if (description.trim().length < 100) return;
     try {
@@ -108,7 +111,7 @@ export default function NewCaseFlow({ onBack }) {
 
   const handleApproveSummary = async () => {
     try {
-      setLoading(true); // Triggers loading state across button trees
+      setLoading(true); 
       const data = await extractCharges(caseId, summary);
       if (!data.draft_charges) return;
       const formattedCharges = data.draft_charges.map((c) => ({
@@ -126,8 +129,7 @@ export default function NewCaseFlow({ onBack }) {
   };
 
   const handleFinalizeCharges = async () => {
-    const hasUnreviewedItems = charges.some(c => c.is_approved === null);
-    if (hasUnreviewedItems) return;
+    if (!allChargesEvaluated) return;
 
     try {
       setLoading(true);
@@ -177,7 +179,6 @@ export default function NewCaseFlow({ onBack }) {
   const approvedChargesCount = charges.filter(c => c.is_approved === true).length;
   const rejectedChargesCount = charges.filter(c => c.is_approved === false).length;
   const activePendingCharges = charges.filter(c => c.is_approved === null);
-  const isReviewProcessComplete = charges.length > 0 && charges.every(c => c.is_approved !== null);
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] font-sans text-[#0F172A] relative overflow-hidden">
@@ -223,7 +224,6 @@ export default function NewCaseFlow({ onBack }) {
       {/* Main Framework Body Viewport */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
         
-        {/* FIXED: Beginner-friendly but highly professional headings */}
         <header className="bg-white border-b border-[#E2E8F0] px-8 py-5 flex justify-between items-center shrink-0">
           <div>
             <h1 className="text-lg font-extrabold text-[#0F172A] tracking-tight">
@@ -357,7 +357,6 @@ export default function NewCaseFlow({ onBack }) {
                   </div>
                 </div>
 
-                {/* Summary View Deck Container */}
                 <div className="lg:col-span-3 bg-[#0F172A] text-white rounded-2xl shadow-xl p-6 flex flex-col justify-between border border-slate-800">
                   <div className="flex flex-col flex-1">
                     <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
@@ -398,7 +397,6 @@ export default function NewCaseFlow({ onBack }) {
                       <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Regenerate
                     </button>
                     
-                    {/* FIXED: Added clear visible loading spinner and state indicator text feedback on click */}
                     <button 
                       onClick={handleApproveSummary} 
                       disabled={loading} 
@@ -424,7 +422,6 @@ export default function NewCaseFlow({ onBack }) {
             {(step === 3 || step === 4) && (
               <div className="space-y-8 relative">
                 
-                {/* FIXED: Tinted Card color changed from plain white to #F1F5F9/70 to pop from the background */}
                 <div className="bg-[#F1F5F9]/70 border border-[#E2E8F0] rounded-2xl p-6 shadow-sm shadow-slate-100 backdrop-blur-xs">
                   <div className="flex items-center gap-2 font-extrabold text-sm text-[#0F172A] mb-2 border-b border-slate-200/60 pb-2.5">
                     <FileText size={15} className="text-[#1E40AF]" />
@@ -434,10 +431,8 @@ export default function NewCaseFlow({ onBack }) {
                   <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">{summary}</p>
                 </div>
 
-                {/* MAIN TABLE CONTAINER: Tinted to pop matching style guide */}
                 <div className="bg-[#F1F5F9]/70 border border-[#E2E8F0] rounded-2xl shadow-sm p-1 backdrop-blur-xs relative">
                   
-                  {/* Dashboard Queue Filter Controller Header Bar */}
                   <div className="p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white rounded-t-xl border-b border-[#E2E8F0]">
                     <div className="flex items-center gap-2">
                       <Scale size={18} className="text-[#1E40AF]" />
@@ -446,7 +441,6 @@ export default function NewCaseFlow({ onBack }) {
 
                     <div className="flex items-center gap-2.5 text-xs font-bold relative w-full md:w-auto justify-end">
                       
-                      {/* FIXED: Interactive Approved Dropdown with State Swap Edit trigger option */}
                       <div 
                         onMouseEnter={() => setActiveHoverModal('approved')}
                         onMouseLeave={() => setActiveHoverModal(null)}
@@ -477,7 +471,6 @@ export default function NewCaseFlow({ onBack }) {
                         )}
                       </div>
 
-                      {/* FIXED: Interactive Rejected Dropdown with State Swap Edit trigger option */}
                       <div 
                         onMouseEnter={() => setActiveHoverModal('rejected')}
                         onMouseLeave={() => setActiveHoverModal(null)}
@@ -519,7 +512,6 @@ export default function NewCaseFlow({ onBack }) {
                     </div>
                   </div>
 
-                  {/* Core Table Grid */}
                   <div className="overflow-x-auto bg-white rounded-b-xl">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -591,7 +583,7 @@ export default function NewCaseFlow({ onBack }) {
                   {/* Footer Controller Bar */}
                   {step === 3 && (
                     <div className="p-5 bg-[#F8FAFC] border-t border-[#E2E8F0] flex justify-between items-center text-xs font-bold">
-                      {!isReviewProcessComplete ? (
+                      {!allChargesEvaluated ? (
                         <span className="text-amber-600 flex items-center gap-1 bg-amber-50 border border-amber-200/50 px-3 py-1.5 rounded-xl animate-pulse">
                           <AlertCircle size={13} /> Gating Error: Review remaining {activePendingCharges.length} identified code nodes to unlock confirmation.
                         </span>
@@ -603,7 +595,7 @@ export default function NewCaseFlow({ onBack }) {
 
                       <button
                         onClick={handleFinalizeCharges}
-                        disabled={loading || !isReviewProcessComplete}
+                        disabled={loading || !allChargesEvaluated}
                         className="bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] disabled:from-slate-100 disabled:to-slate-200 disabled:text-slate-400 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-md disabled:shadow-none flex items-center gap-2"
                       >
                         {loading ? "Cross-referencing..." : "Confirm & Continue"}
@@ -613,7 +605,7 @@ export default function NewCaseFlow({ onBack }) {
                   )}
                 </div>
 
-                {/* STEP 4: Citations List Deck - FIXED to pop shade background layout */}
+                {/* STEP 4: Citations List Deck */}
                 {step === 4 && (
                   <div className="space-y-4 border-t border-[#E2E8F0] pt-6">
                     <div className="flex items-center gap-2 text-gray-900">
