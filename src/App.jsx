@@ -1,46 +1,34 @@
-import { useState } from "react";
-
-import Dashboard from "./pages/CaseDetails";
-import NewCaseFlow from "./pages/NewCaseFlow";
+import React, { useState } from "react";
 import Login from "./components/Login";
+import Dashboard from "./pages/Dashboard";
+import NewCaseFlow from "./pages/NewCaseFlow";
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+export default function App() {
+  const [currentView, setCurrentView] = useState("dashboard");
+  const [authenticated, setAuthenticated] = useState(!!localStorage.getItem("legalai_token"));
 
-  const [activePage, setActivePage] =
-    useState("dashboard");
+  const handleAuthSuccess = (token) => {
+    setAuthenticated(true);
+    setCurrentView("dashboard");
+  };
 
-  // Login Screen
-  if (!isLoggedIn) {
-    return (
-      <Login
-        onAuthSuccess={() =>
-          setIsLoggedIn(true)
-        }
-      />
-    );
+  if (!authenticated) {
+    return <Login onAuthSuccess={handleAuthSuccess} />;
   }
 
-  // Main App
   return (
     <>
-      {activePage === "dashboard" && (
-        <Dashboard
-          onCreateCase={() =>
-            setActivePage("new-case")
-          }
+      {currentView === "dashboard" && (
+        <Dashboard 
+          onCreateCase={() => setCurrentView("new-case")} 
         />
       )}
 
-      {activePage === "new-case" && (
-        <NewCaseFlow
-          onBack={() =>
-            setActivePage("dashboard")
-          }
+      {currentView === "new-case" && (
+        <NewCaseFlow 
+          onBack={() => setCurrentView("dashboard")} 
         />
       )}
     </>
   );
 }
-
-export default App;
