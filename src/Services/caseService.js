@@ -15,6 +15,21 @@ export const createCase = async (description, userId) => {
   return await res.json();
 };
 
+// YAHI FUNCTION MISSING THA JISKI WAJAH SE ERROR AAYA!
+export const regenerateSummary = async (caseId, description) => {
+  const res = await fetch(`${BASE_URL}/api/v1/cases/${caseId}/regenerate-summary`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      case_description: description,
+    }),
+  });
+
+  return await res.json();
+};
+
 export const extractCharges = async (caseId, summary) => {
   const res = await fetch(
     `${BASE_URL}/api/v1/cases/${caseId}/extract-charges`,
@@ -32,11 +47,7 @@ export const extractCharges = async (caseId, summary) => {
   return await res.json();
 };
 
-export const finalizeCharges = async (
-  caseId,
-  approvedIds,
-  rejectedData
-) => {
+export const finalizeCharges = async (caseId, approvedIds, rejectedData) => {
   const res = await fetch(
     `${BASE_URL}/api/v1/cases/${caseId}/finalize-charges`,
     {
