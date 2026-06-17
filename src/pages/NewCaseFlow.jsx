@@ -30,6 +30,7 @@ import {
   extractCharges,
   finalizeCharges,
   fetchPrecedents,
+  regenerateSummary
 } from "../Services/caseService";
 
 const FLOW_STEPS = [
@@ -195,8 +196,16 @@ export default function NewCaseFlow({ onBack, resumeData }) {
     if (description.trim().length < 100) return;
     try {
       setLoading(true);
-      const data = await createCase(description, userId);
-      setCaseId(data.id);
+      let data;
+      // 🔄 If caseId exists, we are REGENERATING. Do not create a new case.
+      if (caseId) {
+        // You will need to import 'regenerateSummary' at the top of your file
+        data = await regenerateSummary(caseId, description);
+      } else {
+        // 🆕 First time generating, create a new case
+        data = await createCase(description, userId);
+        setCaseId(data.id);
+      }
       setSummary(data.llm_summary || data.lawyer_approved_summary || "");
       setIsEditingSummary(false);
       setStep(2);
@@ -214,6 +223,9 @@ export default function NewCaseFlow({ onBack, resumeData }) {
       if (!data?.draft_charges) return;
       const formattedCharges = data.draft_charges.map((c) => ({
         ...c,
+        // Map exactly to your DB column names
+        bns_section: c.bns_section || "N/A",
+        reason: c.reason || "No explanation provided",
         is_approved: null,
         confidence: c?.confidence || 85
       }));
@@ -255,9 +267,9 @@ export default function NewCaseFlow({ onBack, resumeData }) {
 
     const customRow = {
       ipc_section: newIpc,
-      bns_equivalent: newBns || "N/A",
+      bns_section: newBns || "N/A",
       legal_category: newCategory || "Manual Entry",
-      explanation: newExplanation,
+      reason: newExplanation,
       confidence: 100, 
       is_approved: true
     };
