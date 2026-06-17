@@ -30,6 +30,7 @@ import {
   extractCharges,
   finalizeCharges,
   fetchPrecedents,
+  regenerateSummary
 } from "../Services/caseService";
 
 const FLOW_STEPS = [
@@ -97,8 +98,16 @@ export default function NewCaseFlow({ onBack }) {
     if (description.trim().length < 100) return;
     try {
       setLoading(true);
-      const data = await createCase(description, userId);
-      setCaseId(data.id);
+      let data;
+      // 🔄 If caseId exists, we are REGENERATING. Do not create a new case.
+      if (caseId) {
+        // You will need to import 'regenerateSummary' at the top of your file
+        data = await regenerateSummary(caseId, description);
+      } else {
+        // 🆕 First time generating, create a new case
+        data = await createCase(description, userId);
+        setCaseId(data.id);
+      }
       setSummary(data.llm_summary || data.lawyer_approved_summary || "");
       setIsEditingSummary(false);
       setStep(2);
@@ -116,6 +125,9 @@ export default function NewCaseFlow({ onBack }) {
       if (!data.draft_charges) return;
       const formattedCharges = data.draft_charges.map((c) => ({
         ...c,
+        // Map exactly to your DB column names
+        bns_section: c.bns_section || "N/A",
+        reason: c.reason || "No explanation provided",
         is_approved: null,
         confidence: c.confidence || 85
       }));
@@ -164,9 +176,9 @@ export default function NewCaseFlow({ onBack }) {
 
     const customRow = {
       ipc_section: newIpc,
-      bns_equivalent: newBns || "N/A",
+      bns_section: newBns || "N/A",
       legal_category: newCategory || "Manual Entry",
-      explanation: newExplanation,
+      reason: newExplanation,
       confidence: 100, 
       is_approved: true
     };
@@ -537,15 +549,15 @@ export default function NewCaseFlow({ onBack }) {
                               <tr key={realIdx} className="hover:bg-[#F8FAFC] transition-all duration-200">
                                 <td className="px-6 py-4.5 font-mono font-bold text-gray-900">
                                   <span className="text-xs px-2 py-0.5 rounded bg-slate-100 border border-slate-200">{charge.ipc_section}</span>
-                                  <div className="text-[10px] text-slate-400 font-semibold mt-1.5 pl-0.5">BNS: {charge.bns_equivalent || "N/A"}</div>
+                                  <div className="text-[10px] text-slate-400 font-semibold mt-1.5 pl-0.5">BNS: {charge.bns_section || "N/A"}</div>
                                 </td>
                                 <td className="px-6 py-4.5">
-                                  <span className="bg-[#DBEAFE] text-[#1D4ED8] px-2.5 py-1 rounded-xl font-bold border border-[#BFDBFE] tracking-wide">
-                                    {charge.legal_category || "Statutory Check"}
-                                  </span>
-                                </td>
+                                <span className="inline-flex items-center justify-center bg-[#DBEAFE] text-[#1D4ED8] px-3 py-1 text-[11px] rounded-xl font-bold border border-[#BFDBFE] tracking-wide whitespace-nowrap">
+                                  {charge.legal_category || "Statutory Check"}
+                                </span>
+                              </td>
                                 <td className="px-6 py-4.5 text-slate-600 max-w-sm leading-relaxed font-medium">
-                                  {charge.explanation}
+                                  {charge.reason}
                                 </td>
                                 <td className="px-6 py-4.5 font-bold whitespace-nowrap">
                                   <div className="flex items-center gap-2">
