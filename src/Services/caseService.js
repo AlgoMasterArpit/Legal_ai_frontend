@@ -15,17 +15,21 @@ export const createCase = async (description, userId) => {
   return await res.json();
 };
 
-// YAHI FUNCTION MISSING THA JISKI WAJAH SE ERROR AAYA!
+// 👇 Is function ko update karna hai
 export const regenerateSummary = async (caseId, description) => {
-  const res = await fetch(`${BASE_URL}/api/v1/cases/${caseId}/regenerate-summary`, {
-    method: "POST",
+  const res = await fetch(`${BASE_URL}/api/v1/cases/${caseId}/regenerate`, {
+    method: "PUT", // 👈 Changed from POST to PUT
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      case_description: description,
+      description: description, // 👈 Changed from case_description to description
     }),
   });
+
+  if (!res.ok) {
+    throw new Error(`Failed to regenerate summary: ${res.status}`);
+  }
 
   return await res.json();
 };

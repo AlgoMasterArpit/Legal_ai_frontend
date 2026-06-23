@@ -18,15 +18,16 @@ import {
   XCircle,
 } from "lucide-react";
 
-// API Services
+// API Services - Yahan humne regenerateSummary add kar liya hai!
 import {
   createCase,
+  regenerateSummary,
   extractCharges,
   finalizeCharges,
   fetchPrecedents,
 } from "../services/caseService";
 
-// Naye Modular Components
+// Modular Components
 import Step1Input from "../components/CaseFlowSteps/Step1Input";
 import Step2Summary from "../components/CaseFlowSteps/Step2Summary";
 import Step3Mapping from "../components/CaseFlowSteps/Step3Mapping";
@@ -220,12 +221,22 @@ export default function NewCaseFlow({ onBack, resumeData }) {
     setRejectionReason("");
   };
 
+  // ✅ THE FIX: DYNAMICALLY SWITCH BETWEEN CREATE & REGENERATE
   const handleGenerateSummary = async () => {
     if (description.trim().length < 100) return;
     try {
       setLoading(true);
-      const data = await createCase(description, userId);
-      setCaseId(data.id);
+      let data;
+      
+      if (caseId) {
+        // Agar caseId already hai (matlab hum Step 2 se regenerate kar rahe hain)
+        data = await regenerateSummary(caseId, description);
+      } else {
+        // Agar caseId nahi hai (matlab ekdum fresh case ban raha hai)
+        data = await createCase(description, userId);
+        setCaseId(data.id);
+      }
+      
       setSummary(data.llm_summary || data.lawyer_approved_summary || "");
       setIsEditingSummary(false);
       setStep(2);
