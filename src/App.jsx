@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Login from "./components/Login";
+import Login from './pages/Login';
 import Dashboard from "./pages/Dashboard";
 import NewCaseFlow from "./pages/NewCaseFlow";
 
