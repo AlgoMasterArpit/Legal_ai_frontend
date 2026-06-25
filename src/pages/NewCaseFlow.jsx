@@ -227,16 +227,15 @@ export default function NewCaseFlow({ onBack, resumeData }) {
     try {
       setLoading(true);
       let data;
-      
+      // 🔄 If caseId exists, we are REGENERATING. Do not create a new case.
       if (caseId) {
-        // Agar caseId already hai (matlab hum Step 2 se regenerate kar rahe hain)
+        // You will need to import 'regenerateSummary' at the top of your file
         data = await regenerateSummary(caseId, description);
       } else {
-        // Agar caseId nahi hai (matlab ekdum fresh case ban raha hai)
+        // 🆕 First time generating, create a new case
         data = await createCase(description, userId);
         setCaseId(data.id);
       }
-      
       setSummary(data.llm_summary || data.lawyer_approved_summary || "");
       setIsEditingSummary(false);
       setStep(2);
