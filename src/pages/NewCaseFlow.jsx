@@ -43,7 +43,7 @@ const FLOW_STEPS = [
 export default function NewCaseFlow({ onBack }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  
+
   const [description, setDescription] = useState("");
   const [summary, setSummary] = useState("");
   const [charges, setCharges] = useState([]);
@@ -120,7 +120,7 @@ export default function NewCaseFlow({ onBack }) {
 
   const handleApproveSummary = async () => {
     try {
-      setLoading(true); 
+      setLoading(true);
       const data = await extractCharges(caseId, summary);
       if (!data.draft_charges) return;
       const formattedCharges = data.draft_charges.map((c) => ({
@@ -152,7 +152,7 @@ export default function NewCaseFlow({ onBack }) {
 
       await finalizeCharges(caseId, approvedIds, rejectedData);
       const precedentData = await fetchPrecedents(caseId);
-      
+
       setPrecedents(precedentData.precedent_cases || []);
       setStep(4);
     } catch (err) {
@@ -163,8 +163,8 @@ export default function NewCaseFlow({ onBack }) {
   };
 
   const toggleChargeStatus = (targetIndex, approvalState) => {
-    setCharges(prevCharges => 
-      prevCharges.map((charge, idx) => 
+    setCharges(prevCharges =>
+      prevCharges.map((charge, idx) =>
         idx === targetIndex ? { ...charge, is_approved: approvalState } : charge
       )
     );
@@ -179,7 +179,7 @@ export default function NewCaseFlow({ onBack }) {
       bns_section: newBns || "N/A",
       legal_category: newCategory || "Manual Entry",
       reason: newExplanation,
-      confidence: 100, 
+      confidence: 100,
       is_approved: true
     };
 
@@ -194,7 +194,7 @@ export default function NewCaseFlow({ onBack }) {
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] font-sans text-[#0F172A] relative overflow-hidden">
-      
+
       {/* Sidebar Layout */}
       <aside className="w-64 bg-[#0F172A] flex flex-col shrink-0 shadow-[4px_0_24px_rgba(15,23,42,0.15)]">
         <div className="p-6 bg-gradient-to-br from-[#0F172A] to-[#1E3A8A] border-b border-slate-800">
@@ -235,7 +235,7 @@ export default function NewCaseFlow({ onBack }) {
 
       {/* Main Framework Body Viewport */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        
+
         <header className="bg-white border-b border-[#E2E8F0] px-8 py-5 flex justify-between items-center shrink-0">
           <div>
             <h1 className="text-lg font-extrabold text-[#0F172A] tracking-tight">
@@ -246,7 +246,7 @@ export default function NewCaseFlow({ onBack }) {
             </h1>
             <p className="text-xs font-semibold text-[#64748B] mt-0.5">Secure AI-assisted verification workflow</p>
           </div>
-          
+
           <div className="flex items-center gap-6">
             <div className="relative">
               <Search size={15} className="absolute left-3.5 top-3 text-slate-400" />
@@ -262,11 +262,11 @@ export default function NewCaseFlow({ onBack }) {
         {/* Dropdown Widget - View Raw Description Layer */}
         {step > 1 && (
           <div className="bg-white border-b border-[#E2E8F0] px-8 py-3 flex flex-col shrink-0 transition-all duration-200">
-            <button 
+            <button
               onClick={() => setIsRawDocOpen(!isRawDocOpen)}
               className="flex items-center gap-1.5 text-xs font-bold text-[#1E40AF] hover:text-blue-700 w-fit transition select-none"
             >
-              <Eye size={14} /> 
+              <Eye size={14} />
               {isRawDocOpen ? "Collapse Raw Case Narrative" : "View Raw Case Description Log"}
               {isRawDocOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
@@ -280,7 +280,7 @@ export default function NewCaseFlow({ onBack }) {
 
         {/* Main Processing Scroll View Container */}
         <div className="flex-1 overflow-auto p-8 lg:p-12 space-y-8">
-          
+
           {/* Timeline wizard mapping panel node */}
           {step > 1 && (
             <div className="max-w-5xl mx-auto bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-2xs">
@@ -291,11 +291,10 @@ export default function NewCaseFlow({ onBack }) {
                   const isActive = step === s.id;
                   return (
                     <div key={s.id} className="flex flex-col items-center flex-1 relative z-10">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                        isCompleted ? "bg-[#1E40AF] border-[#1E40AF] text-white" :
-                        isActive ? "bg-blue-50 border-[#2563EB] text-[#1E40AF] font-bold shadow-sm scale-105" :
-                        "bg-white border-[#E2E8F0] text-slate-400"
-                      }`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${isCompleted ? "bg-[#1E40AF] border-[#1E40AF] text-white" :
+                          isActive ? "bg-blue-50 border-[#2563EB] text-[#1E40AF] font-bold shadow-sm scale-105" :
+                            "bg-white border-[#E2E8F0] text-slate-400"
+                        }`}>
                         {isCompleted ? <Check size={16} strokeWidth={3} /> : <StepIcon size={16} />}
                       </div>
                       <span className={`text-xs mt-2.5 font-bold tracking-tight ${isActive ? "text-[#1E40AF]" : "text-slate-400"}`}>
@@ -314,7 +313,7 @@ export default function NewCaseFlow({ onBack }) {
           )}
 
           <div className="max-w-5xl mx-auto">
-            
+
             {/* STEP 1: Textarea Core Box View */}
             {step === 1 && (
               <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.04)] p-8">
@@ -408,10 +407,10 @@ export default function NewCaseFlow({ onBack }) {
                     <button onClick={handleGenerateSummary} disabled={loading} className="flex items-center justify-center gap-1.5 text-xs bg-white/5 border border-slate-800 hover:bg-white/10 text-blue-400 px-3 py-2.5 rounded-xl font-bold transition">
                       <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Regenerate
                     </button>
-                    
-                    <button 
-                      onClick={handleApproveSummary} 
-                      disabled={loading} 
+
+                    <button
+                      onClick={handleApproveSummary}
+                      disabled={loading}
                       className="bg-[#2563EB] hover:bg-blue-500 text-white font-bold text-xs px-3 py-2.5 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5 disabled:opacity-75 disabled:cursor-not-allowed"
                     >
                       {loading ? (
@@ -433,7 +432,7 @@ export default function NewCaseFlow({ onBack }) {
             {/* STEP 3 & 4: Sections Grid Matrix Framework */}
             {(step === 3 || step === 4) && (
               <div className="space-y-8 relative">
-                
+
                 <div className="bg-[#F1F5F9]/70 border border-[#E2E8F0] rounded-2xl p-6 shadow-sm shadow-slate-100 backdrop-blur-xs">
                   <div className="flex items-center gap-2 font-extrabold text-sm text-[#0F172A] mb-2 border-b border-slate-200/60 pb-2.5">
                     <FileText size={15} className="text-[#1E40AF]" />
@@ -444,7 +443,7 @@ export default function NewCaseFlow({ onBack }) {
                 </div>
 
                 <div className="bg-[#F1F5F9]/70 border border-[#E2E8F0] rounded-2xl shadow-sm p-1 backdrop-blur-xs relative">
-                  
+
                   <div className="p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white rounded-t-xl border-b border-[#E2E8F0]">
                     <div className="flex items-center gap-2">
                       <Scale size={18} className="text-[#1E40AF]" />
@@ -452,14 +451,14 @@ export default function NewCaseFlow({ onBack }) {
                     </div>
 
                     <div className="flex items-center gap-2.5 text-xs font-bold relative w-full md:w-auto justify-end">
-                      
-                      <div 
+
+                      <div
                         onMouseEnter={() => setActiveHoverModal('approved')}
                         onMouseLeave={() => setActiveHoverModal(null)}
                         className="px-3 py-1.5 bg-[#E6F4EA] text-[#137333] border border-[#CEEAD6] rounded-xl flex items-center gap-1 cursor-pointer shadow-3xs relative group z-30"
                       >
                         <CheckCircle size={13} /> {approvedChargesCount} Approved
-                        
+
                         {activeHoverModal === 'approved' && approvedChargesCount > 0 && (
                           <div className="absolute right-0 top-8 w-72 bg-white border border-[#E2E8F0] rounded-xl p-3 shadow-xl text-left text-slate-700 pointer-events-auto z-50">
                             <h4 className="font-extrabold text-[11px] text-[#137333] uppercase tracking-wider mb-2 border-b pb-1 flex items-center justify-between">
@@ -470,7 +469,7 @@ export default function NewCaseFlow({ onBack }) {
                               {charges.map((c, i) => c.is_approved === true ? (
                                 <li key={i} className="bg-slate-50 p-1.5 rounded border border-slate-100 flex items-center justify-between gap-2 text-[10px] font-medium font-mono">
                                   <span className="truncate text-slate-800">{c.ipc_section}</span>
-                                  <button 
+                                  <button
                                     onClick={(e) => { e.stopPropagation(); toggleChargeStatus(i, false); }}
                                     className="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded border border-rose-200/60 flex items-center gap-0.5 transition font-sans text-[9px]"
                                   >
@@ -483,13 +482,13 @@ export default function NewCaseFlow({ onBack }) {
                         )}
                       </div>
 
-                      <div 
+                      <div
                         onMouseEnter={() => setActiveHoverModal('rejected')}
                         onMouseLeave={() => setActiveHoverModal(null)}
                         className="px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl flex items-center gap-1 cursor-pointer shadow-3xs relative group z-30"
                       >
                         <XCircle size={13} /> {rejectedChargesCount} Rejected
-                        
+
                         {activeHoverModal === 'rejected' && rejectedChargesCount > 0 && (
                           <div className="absolute right-0 top-8 w-72 bg-white border border-[#E2E8F0] rounded-xl p-3 shadow-xl text-left text-slate-700 pointer-events-auto z-50">
                             <h4 className="font-extrabold text-[11px] text-rose-700 uppercase tracking-wider mb-2 border-b pb-1 flex items-center justify-between">
@@ -500,7 +499,7 @@ export default function NewCaseFlow({ onBack }) {
                               {charges.map((c, i) => c.is_approved === false ? (
                                 <li key={i} className="bg-slate-50 p-1.5 rounded border border-slate-100 flex items-center justify-between gap-2 text-[10px] font-medium font-mono">
                                   <span className="truncate text-slate-800">{c.ipc_section}</span>
-                                  <button 
+                                  <button
                                     onClick={(e) => { e.stopPropagation(); toggleChargeStatus(i, true); }}
                                     className="px-1.5 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded border border-emerald-200/60 flex items-center gap-0.5 transition font-sans text-[9px]"
                                   >
@@ -515,7 +514,7 @@ export default function NewCaseFlow({ onBack }) {
 
                       <div className="h-4 w-px bg-slate-200 hidden md:block mx-1" />
 
-                      <button 
+                      <button
                         onClick={() => setIsModalOpen(true)}
                         className="border border-[#E2E8F0] bg-white hover:bg-slate-50 text-xs font-bold px-3 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 text-[#64748B] active:scale-95"
                       >
@@ -544,7 +543,7 @@ export default function NewCaseFlow({ onBack }) {
                           </tr>
                         ) : (
                           activePendingCharges.map((charge, realIdx) => {
-                            const absoluteIndex = charges.findIndex(c => c.ipc_section === charge.ipc_section && c.explanation === charge.explanation);
+                            const absoluteIndex = charges.findIndex(c => c.ipc_section === charge.ipc_section && c.reason === charge.reason);
                             return (
                               <tr key={realIdx} className="hover:bg-[#F8FAFC] transition-all duration-200">
                                 <td className="px-6 py-4.5 font-mono font-bold text-gray-900">
@@ -552,10 +551,10 @@ export default function NewCaseFlow({ onBack }) {
                                   <div className="text-[10px] text-slate-400 font-semibold mt-1.5 pl-0.5">BNS: {charge.bns_section || "N/A"}</div>
                                 </td>
                                 <td className="px-6 py-4.5">
-                                <span className="inline-flex items-center justify-center bg-[#DBEAFE] text-[#1D4ED8] px-3 py-1 text-[11px] rounded-xl font-bold border border-[#BFDBFE] tracking-wide whitespace-nowrap">
-                                  {charge.legal_category || "Statutory Check"}
-                                </span>
-                              </td>
+                                  <span className="inline-flex items-center justify-center bg-[#DBEAFE] text-[#1D4ED8] px-3 py-1 text-[11px] rounded-xl font-bold border border-[#BFDBFE] tracking-wide whitespace-nowrap">
+                                    {charge.legal_category || "Statutory Check"}
+                                  </span>
+                                </td>
                                 <td className="px-6 py-4.5 text-slate-600 max-w-sm leading-relaxed font-medium">
                                   {charge.reason}
                                 </td>
@@ -567,7 +566,7 @@ export default function NewCaseFlow({ onBack }) {
                                     <span className="font-mono text-slate-500 text-[11px]">{charge.confidence || 85}%</span>
                                   </div>
                                 </td>
-                                
+
                                 <td className="px-6 py-4.5 text-right whitespace-nowrap">
                                   <div className="inline-flex gap-1.5">
                                     <button
@@ -624,7 +623,7 @@ export default function NewCaseFlow({ onBack }) {
                       <FolderOpen size={18} className="text-[#1E40AF]" />
                       <h3 className="font-extrabold text-base tracking-tight">Precedent Analysis & Similar Cases</h3>
                     </div>
-                    
+
                     {precedents.length === 0 ? (
                       <div className="bg-[#F1F5F9]/70 border border-[#E2E8F0] rounded-2xl p-12 text-center text-xs text-slate-400 font-bold shadow-2xs">
                         Searching systems matrix databases... No active citation objects matched yet.
