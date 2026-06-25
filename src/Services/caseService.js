@@ -47,11 +47,7 @@ export const extractCharges = async (caseId, summary) => {
   return await res.json();
 };
 
-export const finalizeCharges = async (
-  caseId,
-  approvedIds,
-  rejectedData
-) => {
+export const finalizeCharges = async (caseId, approvedIds, rejectedData) => {
   const res = await fetch(
     `${BASE_URL}/api/v1/cases/${caseId}/finalize-charges`,
     {
