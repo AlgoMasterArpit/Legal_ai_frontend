@@ -14,7 +14,7 @@ import {
   Scale
 } from "lucide-react";
 
-export default function Dashboard({ onCreateCase }) {
+export default function Dashboard({ onCreateCase, onResumeCase }) {
   const [search, setSearch] = useState("");
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -60,13 +60,10 @@ export default function Dashboard({ onCreateCase }) {
   };
 
   return (
-    // Light Grey/Slate Page Background for depth contrast
     <div className="flex h-screen bg-[#F8FAFC] font-sans text-[#0F172A] overflow-hidden">
       
-      {/* Dark Navy Enterprise Sidebar */}
+      {/* Sidebar Layout */}
       <aside className="w-64 bg-[#0F172A] flex flex-col shrink-0 z-10 shadow-[4px_0_24px_rgba(15,23,42,0.15)]">
-        
-        {/* Logo Branding Highlight Block */}
         <div className="p-6 bg-gradient-to-br from-[#0F172A] to-[#1E3A8A] border-b border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-blue-600/20 border border-blue-500/30 rounded-xl flex items-center justify-center text-blue-400">
@@ -76,45 +73,33 @@ export default function Dashboard({ onCreateCase }) {
               <h1 className="text-xl font-black tracking-tight text-white leading-none">
                 Legal<span className="text-blue-500">AI</span>
               </h1>
-              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mt-1">
-                Enterprise Node
-              </p>
+              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mt-1">Enterprise Node</p>
             </div>
           </div>
         </div>
 
-        {/* Navigation Layer */}
         <nav className="flex-1 px-4 py-6">
           <ul className="space-y-1">
             <li className="bg-[#2563EB] text-white rounded-xl shadow-md shadow-blue-900/20">
               <button className="w-full flex items-center gap-3 px-4 py-3.5 text-left font-bold text-sm tracking-wide">
-                <LayoutDashboard size={18} strokeWidth={2.5} />
-                Dashboard
+                <LayoutDashboard size={18} strokeWidth={2.5} /> Dashboard
               </button>
             </li>
-
             <li>
               <button className="w-full flex items-center gap-3 px-4 py-3.5 text-[#CBD5E1] hover:text-white hover:bg-slate-800/50 rounded-xl text-left font-semibold text-sm transition-all duration-150 group">
-                <FolderOpen size={18} className="text-slate-400 group-hover:text-white" />
-                Cases
+                <FolderOpen size={18} className="text-slate-400 group-hover:text-white" /> Cases
               </button>
             </li>
-
             <li>
               <button className="w-full flex items-center gap-3 px-4 py-3.5 text-[#CBD5E1] hover:text-white hover:bg-slate-800/50 rounded-xl text-left font-semibold text-sm transition-all duration-150 group">
-                <Settings size={18} className="text-slate-400 group-hover:text-white" />
-                Settings
+                <Settings size={18} className="text-slate-400 group-hover:text-white" /> Settings
               </button>
             </li>
           </ul>
         </nav>
 
-        {/* Footer Area - FIXED text to just "Sign Out" */}
         <div className="p-4 border-t border-slate-800/60 bg-slate-950/20">
-          <button
-            onClick={handleLogout}
-            className="w-full text-center text-xs font-bold tracking-wider uppercase text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 border border-transparent hover:border-rose-900/30 px-4 py-3 rounded-xl transition-all duration-200"
-          >
+          <button onClick={handleLogout} className="w-full text-center text-xs font-bold tracking-wider uppercase text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 border border-transparent hover:border-rose-900/30 px-4 py-3 rounded-xl transition-all duration-200">
             Sign Out
           </button>
         </div>
@@ -122,49 +107,32 @@ export default function Dashboard({ onCreateCase }) {
 
       {/* Main Container Layer */}
       <div className="flex-1 flex overflow-hidden">
-        
-        {/* Dashboard Frame Viewport */}
         <main className="flex-1 p-8 lg:p-12 overflow-auto transition-all duration-300">
           
-          {/* Header Node */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/60 pb-6">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-slate-900">
-                Welcome Back
-              </h1>
-              <p className="text-sm font-semibold text-[#64748B] mt-1">
-                Manage, trace, and audit your deep compliance legal cases.
-              </p>
+              <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-slate-900">Welcome Back</h1>
+              <p className="text-sm font-semibold text-[#64748B] mt-1">Manage, trace, and audit your deep compliance legal cases.</p>
             </div>
-
             <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
               <div className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl cursor-pointer hover:bg-slate-50 transition relative shadow-sm">
                 <Bell size={18} className="text-[#64748B]" />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full ring-2 ring-white" />
               </div>
-
-              <button
-                onClick={onCreateCase}
-                className="bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white px-5 py-3 rounded-xl font-bold text-sm hover:opacity-95 transition-all duration-200 shadow-[0_4px_14px_rgba(30,64,175,0.2)] flex items-center gap-2"
-              >
+              <button onClick={onCreateCase} className="bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white px-5 py-3 rounded-xl font-bold text-sm hover:opacity-95 transition-all duration-200 shadow-[0_4px_14px_rgba(30,64,175,0.2)] flex items-center gap-2">
                 <span>+</span> Create New Case
               </button>
             </div>
           </div>
 
-          {/* Premium White Elevated Card Table Container */}
           <div className="bg-white border border-[#E2E8F0] rounded-2xl mt-8 shadow-[0_4px_20px_rgba(15,23,42,0.05)] overflow-hidden p-1">
-            
-            {/* Table Controller Elements */}
             <div className="p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white rounded-t-xl">
               <div>
                 <h2 className="text-base font-extrabold text-[#0F172A] flex items-center gap-2 tracking-tight">
-                  <Layers size={18} className="text-[#1E40AF]" />
-                  Recent Analysis Logs
+                  <Layers size={18} className="text-[#1E40AF]" /> Recent Analysis Logs
                 </h2>
                 <p className="text-xs text-[#64748B] mt-0.5">Real-time dynamic legal section tracking models</p>
               </div>
-
               <div className="flex gap-2.5 w-full md:w-auto">
                 <div className="relative flex-1 md:flex-none">
                   <Search size={15} className="absolute left-3.5 top-3.5 text-slate-400" />
@@ -179,15 +147,12 @@ export default function Dashboard({ onCreateCase }) {
                     className="pl-10 pr-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl w-full md:w-64 text-sm font-medium focus:outline-none focus:bg-white focus:border-[#3B82F6] transition-all duration-150 placeholder-slate-400 text-[#0F172A]"
                   />
                 </div>
-
                 <button className="border border-[#E2E8F0] rounded-xl px-4 py-2.5 flex items-center gap-2 text-xs font-bold text-[#64748B] bg-white hover:bg-slate-50 transition shadow-xs">
-                  <Filter size={14} />
-                  Filters
+                  <Filter size={14} /> Filters
                 </button>
               </div>
             </div>
 
-            {/* Core Data Sheets Grid */}
             <div className="overflow-x-auto bg-white rounded-b-xl">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -204,58 +169,46 @@ export default function Dashboard({ onCreateCase }) {
                     <tr>
                       <td colSpan="5" className="text-center py-16 text-[#64748B] font-semibold bg-white">
                         <div className="flex items-center justify-center gap-2">
-                          <div className="w-4 h-4 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin" />
-                          Syncing Cases Framework...
+                          <div className="w-4 h-4 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin" /> Syncing Cases...
                         </div>
                       </td>
                     </tr>
                   ) : cases.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="text-center py-16 text-[#64748B] font-semibold bg-white">
-                        No Records Discovered
-                      </td>
+                      <td colSpan="5" className="text-center py-16 text-[#64748B] font-semibold bg-white">No Records Discovered</td>
                     </tr>
                   ) : (
                     cases.map((item) => (
                       <tr
                         key={item.id}
                         className={`transition-all duration-150 group cursor-pointer border-b border-slate-100 last:border-0 ${
-                          selectedCase?.id === item.id 
-                            ? "bg-blue-50/50" 
-                            : "bg-white hover:bg-[#F8FAFC]"
+                          selectedCase?.id === item.id ? "bg-blue-50/50" : "bg-white hover:bg-[#F8FAFC]"
                         }`}
                         onClick={() => setSelectedCase(item)}
                       >
                         <td className="px-6 py-4.5 whitespace-nowrap">
-                          <span className="font-mono text-xs font-bold text-[#64748B] bg-slate-100 group-hover:bg-white px-2 py-1 rounded-md tracking-wider border border-slate-200 shadow-2xs transition-colors">
+                          <span className="font-mono text-xs font-bold text-[#64748B] bg-slate-100 group-hover:bg-white px-2 py-1 rounded-md tracking-wider border border-slate-200 shadow-2xs">
                             {item.id.slice(0, 8).toUpperCase()}
                           </span>
                         </td>
-
                         <td className="px-6 py-4.5">
-                          <span className="font-bold text-[#0F172A] group-hover:text-[#1E40AF] transition-colors duration-150 text-sm block max-w-sm truncate">
-                            {item.title}
+                          <span className="font-bold text-[#0F172A] group-hover:text-[#1E40AF] text-sm block max-w-sm truncate">
+                            {item.title || "Untitled Processing Narrative"}
                           </span>
                         </td>
-
                         <td className="px-6 py-4.5 whitespace-nowrap text-[#64748B] font-medium text-xs">
-                          <div className="flex items-center gap-1.5 text-[#64748B]">
+                          <div className="flex items-center gap-1.5">
                             <Calendar size={13} className="text-slate-400" />
-                            {new Date(item.created_at).toLocaleDateString("en-US", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric"
-                            })}
+                            {new Date(item.created_at).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
                           </div>
                         </td>
-
-                        {/* Status Badges Layer mapping */}
                         <td className="px-6 py-4.5 whitespace-nowrap">
+                          {/* DYNAMIC PIPELINE STATUS RENDERING ENGINE */}
                           <span
                             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wide border capitalize ${
                               item.status === "completed"
                                 ? "bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]"
-                                : item.status === "pending_charge_review"
+                                : item.status === "pending_charge_review" || item.status === "pending_section_mapping"
                                 ? "bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]"
                                 : "bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE]"
                             }`}
@@ -263,18 +216,37 @@ export default function Dashboard({ onCreateCase }) {
                             <span className={`w-1.5 h-1.5 rounded-full ${
                               item.status === "completed" 
                                 ? "bg-[#137333]" 
-                                : item.status === "pending_charge_review" 
+                                : item.status === "pending_charge_review" || item.status === "pending_section_mapping"
                                 ? "bg-[#D97706]" 
                                 : "bg-[#1D4ED8]"
                             }`} />
                             {item.status.replaceAll("_", " ")}
                           </span>
                         </td>
-
                         <td className="px-6 py-4.5 whitespace-nowrap text-right">
-                          <button className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 group-hover:text-[#1E40AF] bg-white border border-slate-200 px-3 py-1.5 rounded-xl transition-all duration-150 shadow-2xs">
-                            Inspect <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-150" />
-                          </button>
+                          {item.status === "completed" ? (
+                            /* COMPLETED WORKFLOW: REDIRECTS TO PRECEDENTS STEP 4 */
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onResumeCase) onResumeCase({ id: item.id, status: item.status });
+                              }}
+                              className="inline-flex items-center gap-1 text-xs font-extrabold bg-[#0F172A] text-white px-3 py-1.5 rounded-xl hover:opacity-95 transition-all"
+                            >
+                              Inspect 🔍
+                            </button>
+                          ) : (
+                            /* PENDING WORKFLOW: PREMIUM ORANGE GRADIENT TRACER ACTION BUTTON */
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onResumeCase) onResumeCase({ id: item.id, status: item.status });
+                              }}
+                              className="inline-flex items-center gap-1 text-xs font-extrabold bg-gradient-to-r from-amber-500 to-orange-600 text-white border border-transparent px-3 py-1.5 rounded-xl shadow-md shadow-orange-700/10 hover:opacity-95 transform active:scale-95 transition-all"
+                            >
+                              Resume ⚡
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -283,13 +255,10 @@ export default function Dashboard({ onCreateCase }) {
               </table>
             </div>
 
-            {/* Layout Footer Pagination */}
-            <div className="flex justify-between items-center p-5 rounded-b-xl border-t border-[#E2E8F0] bg-[#F8FAFC] text-xs font-bold text-[#64748B] tracking-wide">
-              <button className="hover:text-[#1E40AF] transition-colors duration-150">Previous</button>
-              <span className="bg-white border border-[#E2E8F0] px-3 py-1.5 rounded-lg text-[#64748B] shadow-2xs">
-                Total Count Matrix: {cases.length}
-              </span>
-              <button className="hover:text-[#1E40AF] transition-colors duration-150">Next</button>
+            <div className="flex justify-between items-center p-5 rounded-b-xl border-t border-[#E2E8F0] bg-[#F8FAFC] text-xs font-bold text-[#64748B]">
+              <button className="hover:text-[#1E40AF]">Previous</button>
+              <span className="bg-white border border-[#E2E8F0] px-3 py-1.5 rounded-lg shadow-2xs">Total Count Matrix: {cases.length}</span>
+              <button className="hover:text-[#1E40AF]">Next</button>
             </div>
           </div>
         </main>
@@ -316,7 +285,7 @@ export default function Dashboard({ onCreateCase }) {
                   {selectedCase.id.toUpperCase()}
                 </span>
                 <h2 className="text-xl font-black text-slate-900 mt-3 leading-snug tracking-tight">
-                  {selectedCase.title}
+                  {selectedCase.title || "Processing Narrative Block"}
                 </h2>
               </div>
 
@@ -324,7 +293,11 @@ export default function Dashboard({ onCreateCase }) {
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Analysis State</span>
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold tracking-wide border capitalize ${
-                    selectedCase.status === "completed" ? "bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]" : "bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE]"
+                    selectedCase.status === "completed"
+                      ? "bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]"
+                      : selectedCase.status === "pending_charge_review" || selectedCase.status === "pending_section_mapping"
+                      ? "bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]"
+                      : "bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE]"
                   }`}>
                     {selectedCase.status.replaceAll("_", " ")}
                   </span>
@@ -335,17 +308,46 @@ export default function Dashboard({ onCreateCase }) {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
-                  <FileText size={14} className="text-slate-400" /> Statutory Analytics Output
-                </h4>
-                <div className="text-sm leading-relaxed text-slate-600 bg-white p-4 rounded-xl border border-[#E2E8F0] shadow-2xs">
-                  <p>AI compilation report logs are active for this matrix node. Comprehensive statutory sections match verification pipeline executes natively on backend models.</p>
-                  <div className="mt-4 p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs font-mono text-slate-400">
-                    user_context_id: {selectedCase.user_id || "default_node"}
+              {/* Pipeline Status Checklist Checkpoints */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 space-y-2">
+                <h4 className="text-[10px] font-black tracking-widest text-[#64748B] uppercase">Pipeline Checkpoints Status</h4>
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-500">1. Fact Compilation Matrix</span>
+                    <span className="text-emerald-600">✓ Complete</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-500">2. Legal Summary Approval</span>
+                    <span className={selectedCase.status !== "pending_summary_approval" ? "text-emerald-600" : "text-amber-500 animate-pulse"}>
+                      {selectedCase.status !== "pending_summary_approval" ? "✓ Verified" : "⏳ Pending Action"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-500">3. Statutory Section Mapping</span>
+                    <span className={selectedCase.status === "completed" ? "text-emerald-600" : (selectedCase.status === "pending_charge_review" || selectedCase.status === "pending_section_mapping" ? "text-amber-500 animate-pulse" : "text-slate-400")}>
+                      {selectedCase.status === "completed" ? "✓ Verified" : (selectedCase.status === "pending_charge_review" || selectedCase.status === "pending_section_mapping" ? "⏳ Pending Review" : "⚬ Gated")}
+                    </span>
                   </div>
                 </div>
               </div>
+
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText size={14} className="text-slate-400" /> Case Summary
+                </h4>
+                <div className="text-xs leading-relaxed text-slate-600 bg-white p-4 rounded-xl border border-[#E2E8F0] shadow-2xs font-medium whitespace-pre-wrap">
+                  {selectedCase.llm_summary || selectedCase.lawyer_approved_summary || "No operational summary formulated for this context node yet."}
+                </div>
+              </div>
+
+              {/* Direct Drawer bottom workflow entrance handler */}
+              <button
+                onClick={() => onResumeCase && onResumeCase({ id: selectedCase.id, status: selectedCase.status })}
+                className="w-full bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-xs py-3 rounded-xl transition flex items-center justify-center gap-1.5"
+              >
+                Open Workflow Execution Pipeline <ArrowRight size={13} />
+              </button>
+
             </div>
           </aside>
         )}
