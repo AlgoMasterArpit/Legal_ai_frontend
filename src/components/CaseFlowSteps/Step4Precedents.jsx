@@ -8,7 +8,7 @@ export default function Step4Precedents({ precedents }) {
         <FolderOpen size={18} className="text-[#1E40AF]" />
         <h3 className="font-extrabold text-base tracking-tight">Precedent Analysis & Similar Cases</h3>
       </div>
-      
+
       {precedents.length === 0 ? (
         <div className="bg-[#F1F5F9]/70 border border-[#E2E8F0] rounded-2xl p-12 text-center text-xs text-slate-400 font-bold shadow-2xs">
           Searching systems matrix databases... No active citation objects matched yet.
@@ -20,7 +20,11 @@ export default function Step4Precedents({ precedents }) {
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-[10px] font-bold font-mono tracking-wider">
                   <span className="text-slate-400">CASE ID: {item?.id ? item.id.slice(0, 10).toUpperCase() : "2024/DL-8042"}</span>
-                  <span className="text-[#137333] bg-[#E6F4EA] px-2 py-0.5 rounded-xl border border-[#CEEAD6]">98.2% Match</span>
+                  <span className="text-[#137333] bg-[#E6F4EA] px-2 py-0.5 rounded-xl border border-[#CEEAD6]">
+                    {item?.ai_score != null
+                      ? `${Number(item.ai_score).toFixed(1)}% Match`
+                      : "N/A"}
+                  </span>
                 </div>
                 <h4 className="font-bold text-[#0F172A] leading-snug text-sm line-clamp-2">{item?.title}</h4>
                 <div className="flex gap-4 text-[11px] text-slate-400 font-semibold">
