@@ -94,9 +94,10 @@ export default function NewCaseFlow({ onBack, resumeData }) {
     window.location.reload();
   };
 
-  // HYDRATION MATRIX RECOVERY
+  // HYDRATION MATRIX RECOVERY: Restores the state of an existing/incomplete case
   useEffect(() => {
     const hydrateIncompleteCase = async () => {
+      // Exit early if there is no case data to resume
       if (!resumeData || !resumeData.id) return;
 
       try {
@@ -106,23 +107,70 @@ export default function NewCaseFlow({ onBack, resumeData }) {
         const cleanBaseUrl = BASE_URL.replace(/\/+$/, "");
         let activeNode = null;
 
+        // Fetch the complete case profile from the backend database
         const directCaseUrl = `${cleanBaseUrl}/api/v1/cases/${resumeData.id}`;
         const directResp = await fetch(directCaseUrl);
         if (directResp.ok) {
           activeNode = await directResp.json();
         }
 
+        // If we successfully retrieved the case data, begin restoring the UI state
         if (activeNode) {
+          // Restore the raw input text and the AI/Lawyer summary
           setDescription(activeNode.raw_description || activeNode.description || "");
           const currentValidSummary = activeNode.llm_summary || activeNode.lawyer_approved_summary || "";
           setSummary(currentValidSummary);
           
           const currentStatus = resumeData.status || resumeData.currentStatus;
 
+          // STEP 1: Extract charges from the backend response. 'applicable_charges' is the correct key.
+          let rawChargesArray = activeNode.applicable_charges || activeNode.charges || activeNode.draft_charges || [];
+          
+          // Fallback safety: If charges are somehow missing but a summary exists, try re-extracting them.
+          // We only do this if the case isn't fully completed yet to avoid overwriting finished data.
+          if (currentStatus !== "completed" && rawChargesArray.length === 0 && currentValidSummary) {
+            const rescueData = await extractCharges(resumeData.id, currentValidSummary);
+            rawChargesArray = rescueData?.draft_charges || [];
+          }
+
+          // Retrieve any unsaved Approve/Reject decisions the user might have made previously from local browser storage
+          const localSavedKey = `legalai_cache_case_${resumeData.id}`;
+          const localDecisionCache = JSON.parse(localStorage.getItem(localSavedKey) || "{}");
+
+          // STEP 2: Map the raw backend data into the exact format expected by the frontend Table component
+          const formattedCharges = Array.isArray(rawChargesArray) 
+            ? rawChargesArray.map((c) => {
+                const currentSectionCode = c?.ipc_section || c?.section_code || c?.ipc_section_code || "";
+                
+                // Check if the user previously toggled this specific charge in local storage
+                const cachedDecision = localDecisionCache[currentSectionCode];
+
+                return {
+                  id: c?.id || null,
+                  ipc_section: currentSectionCode || "N/A",
+                  bns_equivalent: c?.bns_equivalent || c?.bns_section || "N/A",
+                  legal_category: c?.legal_category || "Statutory Check",
+                  explanation: c?.explanation || c?.reason || c?.description || "",
+                  confidence: c?.confidence || 85,
+                  reason: (!c?.is_approved) ? (c?.rejection_reason || c?.explanation || "") : "", 
+                  // Prioritize local unsaved decisions, otherwise use the backend's saved approval status
+                  is_approved: cachedDecision !== undefined ? cachedDecision : (c?.is_approved !== undefined ? c.is_approved : null)
+                };
+              })
+              // FILTER OUT REJECTED CHARGES: Keep only approved (true) or pending (null)
+              .filter((charge) => charge.is_approved === true || charge.is_approved === null)
+            : [];
+              
+          // STEP 3: Globally set the charges in state BEFORE deciding the step.
+          // This ensures the table data is populated even if the user jumps straight to Step 4.
+          setCharges(formattedCharges);
+
+          // STEP 4: Route the user to the correct UI step based on the case's progress status
           if (currentStatus === "pending_summary_approval") {
             setStep(2);
           } else if (currentStatus === "completed") {
             try {
+              // If the case is fully done, fetch precedents and jump straight to Step 4
               const precedentData = await fetchPrecedents(resumeData.id);
               setPrecedents(precedentData?.precedent_cases || []);
             } catch (pErr) {
@@ -130,35 +178,7 @@ export default function NewCaseFlow({ onBack, resumeData }) {
             }
             setStep(4);
           } else {
-            let rawChargesArray = activeNode.applicable_charges || activeNode.charges || activeNode.draft_charges || [];
-
-if (rawChargesArray.length === 0 && currentValidSummary) {
-  const rescueData = await extractCharges(resumeData.id, currentValidSummary);
-  rawChargesArray = rescueData?.draft_charges || [];
-}
-
-            const localSavedKey = `legalai_cache_case_${resumeData.id}`;
-            const localDecisionCache = JSON.parse(localStorage.getItem(localSavedKey) || "{}");
-
-            const formattedCharges = Array.isArray(rawChargesArray) 
-              ? rawChargesArray.map((c) => {
-                  const currentSectionCode = c?.ipc_section || c?.section_code || c?.ipc_section_code || "";
-                  const cachedDecision = localDecisionCache[currentSectionCode];
-
-                  return {
-                    id: c?.id || null,
-                    ipc_section: currentSectionCode || "N/A",
-                    bns_equivalent: c?.bns_equivalent || c?.bns_section || "N/A",
-                    legal_category: c?.legal_category || "Statutory Check",
-                    explanation: c?.explanation || c?.description || c?.case_offense_description || "",
-                    confidence: c?.confidence || 85,
-                    reason: c?.reason || "", 
-                    is_approved: cachedDecision !== undefined ? cachedDecision : (c?.is_approved !== undefined ? c.is_approved : null)
-                  };
-                })
-              : [];
-                
-            setCharges(formattedCharges);
+            // For pending mapping workflows
             setStep(3);
           }
         }
