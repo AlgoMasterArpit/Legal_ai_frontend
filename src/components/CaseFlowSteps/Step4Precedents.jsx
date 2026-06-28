@@ -20,12 +20,18 @@ export default function Step4Precedents({ precedents }) {
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-[10px] font-bold font-mono tracking-wider">
                   <span className="text-slate-400">CASE ID: {item?.id ? item.id.slice(0, 10).toUpperCase() : "2024/DL-8042"}</span>
-                  <span className="text-[#137333] bg-[#E6F4EA] px-2 py-0.5 rounded-xl border border-[#CEEAD6]">98.2% Match</span>
+                  
+                  {/* 👇 YAHAN CHANGE KIYA HAI: Hardcoded 98.2% ko hata kar backend ka ai_score laga diya */}
+                  <span className="text-[#137333] bg-[#E6F4EA] px-2 py-0.5 rounded-xl border border-[#CEEAD6]">
+                    {item?.ai_score ? `${item.ai_score}%` : "N/A"} Match
+                  </span>
+                  
                 </div>
                 <h4 className="font-bold text-[#0F172A] leading-snug text-sm line-clamp-2">{item?.title}</h4>
                 <div className="flex gap-4 text-[11px] text-slate-400 font-semibold">
-                  <span>⚖️ Judgment: Guilty</span>
-                  <span>📅 Date: Oct 12, 2023</span>
+                  {/* Note: In future agar backend judgment ya date bhi bheje toh yahan map kar lena */}
+                  <span>⚖️ Judgment: Relevant</span>
+                  <span>📅 Source: Indian Kanoon</span>
                 </div>
               </div>
               <div className="mt-5 pt-3 border-t border-slate-200 flex justify-end">

@@ -113,14 +113,13 @@ export default function Step3Mapping({
                 <th className="px-6 py-4">Section Code</th>
                 <th className="px-6 py-4">Legal Category</th>
                 <th className="px-6 py-4">Description</th>
-                <th className="px-6 py-4">Confidence</th>
                 <th className="px-6 py-4 text-right">Decision Context</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs bg-white">
               {charges.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-12 text-[#64748B] font-bold bg-slate-50/40 italic">
+                  <td colSpan="4" className="text-center py-12 text-[#64748B] font-bold bg-slate-50/40 italic">
                     ⏳ Extracting and formulating statutory matrix data columns...
                   </td>
                 </tr>
@@ -139,14 +138,6 @@ export default function Step3Mapping({
                     </td>
                       <td className="px-6 py-4.5 text-slate-600 max-w-sm leading-relaxed font-medium">
                         {charge.explanation || charge.reason}
-                      </td>
-                      <td className="px-6 py-4.5 font-bold whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full" style={{ width: `${charge?.confidence || 85}%` }}></div>
-                          </div>
-                          <span className="font-mono text-slate-500 text-[11px]">{charge?.confidence || 85}%</span>
-                        </div>
                       </td>
                       
                       <td className="px-6 py-4.5 text-right whitespace-nowrap">
