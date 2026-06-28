@@ -359,9 +359,6 @@ export default function Dashboard({ onCreateCase, onResumeCase }) {
                               Manual Entry
                             </span>
                           )}
-                          <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">
-                            Confidence: {charge.confidence}%
-                          </span>
                         </div>
                       </div>
                     ))}
