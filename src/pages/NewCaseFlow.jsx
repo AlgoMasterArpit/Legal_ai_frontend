@@ -130,12 +130,12 @@ export default function NewCaseFlow({ onBack, resumeData }) {
             }
             setStep(4);
           } else {
-            let rawChargesArray = activeNode.charges || activeNode.draft_charges || [];
-            
-            if (rawChargesArray.length === 0 && currentValidSummary) {
-              const rescueData = await extractCharges(resumeData.id, currentValidSummary);
-              rawChargesArray = rescueData?.draft_charges || [];
-            }
+            let rawChargesArray = activeNode.applicable_charges || activeNode.charges || activeNode.draft_charges || [];
+
+if (rawChargesArray.length === 0 && currentValidSummary) {
+  const rescueData = await extractCharges(resumeData.id, currentValidSummary);
+  rawChargesArray = rescueData?.draft_charges || [];
+}
 
             const localSavedKey = `legalai_cache_case_${resumeData.id}`;
             const localDecisionCache = JSON.parse(localStorage.getItem(localSavedKey) || "{}");
