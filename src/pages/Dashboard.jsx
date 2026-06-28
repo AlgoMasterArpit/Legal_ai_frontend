@@ -11,7 +11,8 @@ import {
   ArrowRight,
   X,
   FileText,
-  Scale
+  Scale,
+  CheckCircle
 } from "lucide-react";
 
 export default function Dashboard({ onCreateCase, onResumeCase }) {
@@ -19,6 +20,9 @@ export default function Dashboard({ onCreateCase, onResumeCase }) {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedCase, setSelectedCase] = useState(null);
+  
+  const [fullCaseDetails, setFullCaseDetails] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -33,9 +37,7 @@ export default function Dashboard({ onCreateCase, onResumeCase }) {
       }
 
       const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("Failed to fetch cases");
-      }
+      if (!response.ok) throw new Error("Failed to fetch cases");
 
       const data = await response.json();
       setCases(data);
@@ -49,6 +51,29 @@ export default function Dashboard({ onCreateCase, onResumeCase }) {
   useEffect(() => {
     fetchCases();
   }, []);
+
+  useEffect(() => {
+    const fetchFullDetails = async () => {
+      if (!selectedCase) {
+        setFullCaseDetails(null);
+        return;
+      }
+      setLoadingDetails(true);
+      try {
+        const response = await fetch(`${BASE_URL}/api/v1/cases/${selectedCase.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setFullCaseDetails(data);
+        }
+      } catch (error) {
+        console.error("Failed to load full details", error);
+      } finally {
+        setLoadingDetails(false);
+      }
+    };
+
+    fetchFullDetails();
+  }, [selectedCase]);
 
   const handleLogout = () => {
     localStorage.removeItem("legalai_token");
@@ -203,7 +228,6 @@ export default function Dashboard({ onCreateCase, onResumeCase }) {
                           </div>
                         </td>
                         <td className="px-6 py-4.5 whitespace-nowrap">
-                          {/* DYNAMIC PIPELINE STATUS RENDERING ENGINE */}
                           <span
                             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wide border capitalize ${
                               item.status === "completed"
@@ -225,7 +249,6 @@ export default function Dashboard({ onCreateCase, onResumeCase }) {
                         </td>
                         <td className="px-6 py-4.5 whitespace-nowrap text-right">
                           {item.status === "completed" ? (
-                            /* COMPLETED WORKFLOW: REDIRECTS TO PRECEDENTS STEP 4 */
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -236,7 +259,6 @@ export default function Dashboard({ onCreateCase, onResumeCase }) {
                               Inspect 🔍
                             </button>
                           ) : (
-                            /* PENDING WORKFLOW: PREMIUM ORANGE GRADIENT TRACER ACTION BUTTON */
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -282,7 +304,7 @@ export default function Dashboard({ onCreateCase, onResumeCase }) {
             <div className="flex-1 p-6 overflow-auto space-y-6">
               <div>
                 <span className="font-mono text-xs font-bold text-[#1D4ED8] bg-[#DBEAFE] border border-[#BFDBFE] px-2 py-1 rounded">
-                  {selectedCase.id.toUpperCase()}
+                  {selectedCase.id.slice(0,8).toUpperCase()}
                 </span>
                 <h2 className="text-xl font-black text-slate-900 mt-3 leading-snug tracking-tight">
                   {selectedCase.title || "Processing Narrative Block"}
@@ -302,50 +324,66 @@ export default function Dashboard({ onCreateCase, onResumeCase }) {
                     {selectedCase.status.replaceAll("_", " ")}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">Discovered On</span>
-                  <span className="text-xs font-semibold text-slate-700">{new Date(selectedCase.created_at).toLocaleString()}</span>
-                </div>
               </div>
 
-              {/* Pipeline Status Checklist Checkpoints */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 space-y-2">
-                <h4 className="text-[10px] font-black tracking-widest text-[#64748B] uppercase">Pipeline Checkpoints Status</h4>
-                <div className="space-y-1.5 pt-1">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-slate-500">1. Fact Compilation Matrix</span>
-                    <span className="text-emerald-600">✓ Complete</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-slate-500">2. Legal Summary Approval</span>
-                    <span className={selectedCase.status !== "pending_summary_approval" ? "text-emerald-600" : "text-amber-500 animate-pulse"}>
-                      {selectedCase.status !== "pending_summary_approval" ? "✓ Verified" : "⏳ Pending Action"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-slate-500">3. Statutory Section Mapping</span>
-                    <span className={selectedCase.status === "completed" ? "text-emerald-600" : (selectedCase.status === "pending_charge_review" || selectedCase.status === "pending_section_mapping" ? "text-amber-500 animate-pulse" : "text-slate-400")}>
-                      {selectedCase.status === "completed" ? "✓ Verified" : (selectedCase.status === "pending_charge_review" || selectedCase.status === "pending_section_mapping" ? "⏳ Pending Review" : "⚬ Gated")}
-                    </span>
+              {/* ===== NEW: LEGAL SECTIONS RENDERER (Only Approved) ===== */}
+              {loadingDetails ? (
+                <div className="text-center py-6">
+                  <div className="w-5 h-5 border-2 border-[#1E40AF] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-xs font-semibold text-slate-500">Fetching verified statutory codes...</p>
+                </div>
+              ) : fullCaseDetails?.applicable_charges?.filter(c => c.is_approved).length > 0 ? (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
+                    <Scale size={14} className="text-slate-400" /> Extracted Legal Sections
+                  </h4>
+                  <div className="space-y-2">
+                    {fullCaseDetails.applicable_charges
+                      .filter((charge) => charge.is_approved === true) // 👈 SMART FIX: Filtering logic
+                      .map((charge) => (
+                      <div key={charge.id} className="bg-white p-3 border border-slate-200 rounded-xl shadow-sm text-xs">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-extrabold text-slate-800 font-mono text-sm">{charge.ipc_section}</span>
+                          <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md font-bold uppercase tracking-wider">
+                            <CheckCircle size={10}/> Approved
+                          </span>
+                        </div>
+                        
+                        <div className="text-slate-600 font-medium leading-relaxed mt-1 line-clamp-2">
+                          {charge.explanation}
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100">
+                          {charge.source === "LAWYER_MANUAL" && (
+                            <span className="text-[9px] px-1.5 py-0.5 bg-indigo-50 text-indigo-700 font-bold uppercase rounded tracking-wider">
+                              Manual Entry
+                            </span>
+                          )}
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">
+                            Confidence: {charge.confidence}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              ) : null}
 
+              {/* Case Summary Block */}
               <div className="space-y-3">
                 <h4 className="text-xs font-bold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
-                  <FileText size={14} className="text-slate-400" /> Case Summary
+                  <FileText size={14} className="text-slate-400" /> Operational Context
                 </h4>
                 <div className="text-xs leading-relaxed text-slate-600 bg-white p-4 rounded-xl border border-[#E2E8F0] shadow-2xs font-medium whitespace-pre-wrap">
                   {selectedCase.llm_summary || selectedCase.lawyer_approved_summary || "No operational summary formulated for this context node yet."}
                 </div>
               </div>
 
-              {/* Direct Drawer bottom workflow entrance handler */}
               <button
                 onClick={() => onResumeCase && onResumeCase({ id: selectedCase.id, status: selectedCase.status })}
                 className="w-full bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-xs py-3 rounded-xl transition flex items-center justify-center gap-1.5"
               >
-                Open Workflow Execution Pipeline <ArrowRight size={13} />
+                Open Full Execution Pipeline <ArrowRight size={13} />
               </button>
 
             </div>
